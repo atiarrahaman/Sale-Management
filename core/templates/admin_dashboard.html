@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+{% block title %}Admin Home Page{% endblock %}
+
+{% block content %}
+{% load humanize %}
+{% if user.is_authenticated and user.is_staff and user.is_superuser %}
+{% include 'topside.html' %}
+
+<div class="row ">
+    <div class="col-md-6 my-4">
+        <div class="bg-white">
+            <div class="card-body">
+                <canvas id="myChart1" width="400" height="300"></canvas>
+                <script>
+                    var ctx = document.getElementById('myChart1').getContext('2d');
+                    var myChart1 = new Chart(ctx, {
+                        type: 'pie',
+                        data: {
+                            labels: [{% for product in product %} '{{product.name}}', {% endfor %}],
+                    datasets: [{
+                        label: 'Number of Products',
+                        data: [{% for product in product %} {{ product.quantity }}, {% endfor %}],
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 1)',
+                            'rgba(54, 162, 235, 1)',
+                            'rgba(255, 206, 86, 1)',
+                            'rgba(75, 192, 192, 1)',
+                            'rgba(153, 102, 255, 1)',
+                            'rgba(255, 159, 64, 1)'
+                        ],
+                            borderColor: [
+                                'rgba(255, 99, 132, 1)',
+                                'rgba(54, 162, 235, 1)',
+                                'rgba(255, 206, 86, 1)',
+                                'rgba(75, 192, 192, 1)',
+                                'rgba(153, 102, 255, 1)',
+                                'rgba(255, 159, 64, 1)'
+                            ],
+                                borderWidth: 1
+                    }]
+                        },
+                    options: {
+                        scales: {
+                            yAxes: [{
+                                ticks: {
+                                    beginAtZero: true
+                                }
+                            }]
+                        }
+                    }
+                    });
+                </script>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 my-4">
+        <div class="bg-white">
+            <div class="card-body">
+                <canvas id="myChart" width="400" height="300"></canvas>
+                <script>
+                    var ctx = document.getElementById('myChart').getContext('2d');
+                    var myChart = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: [{% for order in order %} '{{order.name}}',{% endfor %}],
+                    datasets: [{
+                        label: 'Orders',
+                        data: [{% for order in order %} {{ order.order_quantity }}, {% endfor %}],
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 1)',
+                            'rgba(54, 162, 235, 1)',
+                            'rgba(255, 206, 86, 1)',
+                            'rgba(75, 192, 192, 1)',
+                            'rgba(153, 102, 255, 1)',
+                            'rgba(255, 159, 64, 1)'
+                        ],
+                            borderColor: [
+                                'rgba(255, 99, 132, 1)',
+                                'rgba(54, 162, 235, 1)',
+                                'rgba(255, 206, 86, 1)',
+                                'rgba(75, 192, 192, 1)',
+                                'rgba(153, 102, 255, 1)',
+                                'rgba(255, 159, 64, 1)'
+                            ],
+                                borderWidth: 1
+                    }]
+                        },
+                    options: {
+                        scales: {
+                            yAxes: [{
+                                ticks: {
+                                    beginAtZero: true
+                                }
+                            }]
+                        }
+                    }
+                    });
+                </script>
+            </div>
+        </div>
+    </div>
+</div>
+<div class=" my-5">
+  <h1 class="text-center pb-4">Transaction Report</h1>
+  <hr />
+
+  <form method="post" action="{% url 'admin_home' %}" class="d-flex justify-content-center mb-4">
+    {% csrf_token %}
+    <div class="input-group">
+        <label for="start_date" class="input-group-text">From:</label>
+        <input type="date" class="form-control" id="start_date" name="start_date" />
+    </div>
+
+    <div class="input-group mx-2">
+        <label for="end_date" class="input-group-text">To:</label>
+        <input type="date" class="form-control" id="end_date" name="end_date" />
+    </div>
+
+    <div class="">
+        <button type="submit" class="btn btn-primary  px-4 fs-4">Filter</button>
+    </div>
+  </form>
+  <table class="table table-bordered table-hover">
+    <thead class="text-white text-center">
+      <tr>
+        <th>ID</th>
+        <th>Date</th>
+        <th>Supplier</th>
+        <th>Amount</th>
+        <th>Date</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for exprensive in object_list %}
+      <tr>
+        <td>{{exprensive.id}}</td>
+        <td>{{exprensive.supplyer.name}}</td>
+        <td class="text-center">${{ exprensive.amount|floatformat:2|intcomma }}</td>
+        <td>{{ exprensive.timestamps|date:"F d, Y h:i A" }}</td>
+        
+        
+        
+      </tr>
+      {% endfor %}
+      <tr class="bg-dark text-white text-end">
+        <th colspan="5">Total Transaction :</th>
+        <th class="text-center">${{ total|floatformat:2|intcomma }}</th>
+      </tr>
+    </tbody>
+  </table>
+</div>
+{% else %}
+{% include 'staff_dashboard.html' %}
+{% endif%}
+
+{% endblock %}

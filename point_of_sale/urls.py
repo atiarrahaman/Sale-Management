@@ -23,6 +23,7 @@ urlpatterns = [
     path('',include('product.urls')),
     path('',include('inventory.urls')),
     path('',include('pos.urls')),
+    path('',include('core.urls')),
     
 
 ]
