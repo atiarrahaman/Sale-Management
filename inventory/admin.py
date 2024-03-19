@@ -1,5 +1,4 @@
 from django.contrib import admin
-from .models import Supplyer,Inventory
-# Register your models here.
-admin.site.register(Supplyer)
+from .models import Inventory
+
 admin.site.register(Inventory)

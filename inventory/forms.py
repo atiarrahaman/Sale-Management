@@ -1,15 +1,6 @@
 from django import forms 
 
-from .models import Supplyer,Inventory
-
-
-
-# suppley form
-
-class SupplerForm(forms.ModelForm):
-    class Meta:
-        model=Supplyer
-        fields=['name','tax_id','phone']
+from .models import Inventory
 
 
 #Inventory Form
@@ -17,4 +8,4 @@ class SupplerForm(forms.ModelForm):
 class InventoryForm(forms.ModelForm):
     class Meta:
         model=Inventory
-        fields=['name','price','qty','supplyer']
+        fields=['name','price','qty']

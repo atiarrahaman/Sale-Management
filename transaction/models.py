@@ -1,5 +1,5 @@
 from django.db import models
-from inventory.models import Supplyer
+from product.models import Supplier
 # Create your models here.
 
 
@@ -7,21 +7,22 @@ from inventory.models import Supplyer
 
 class Exprensive(models.Model):
     amount=models.DecimalField( max_digits=12, decimal_places=2)
-    supplyer=models.ForeignKey(Supplyer, on_delete=models.CASCADE)
+    supplier = models.ForeignKey(
+        Supplier, on_delete=models.CASCADE, blank=True, null=True)
     reason= models.CharField(max_length=500)
     invoice_picture=models.ImageField(upload_to='expensive', blank=True,null=True)
-    date=models.DateField( auto_now_add=True)
+    timestamps = models.DateTimeField(auto_now_add=True, null=True)
 
 
 class Deposite(models.Model):
     amount=models.DecimalField( max_digits=12, decimal_places=2)
     reason= models.CharField(max_length=500)
-    date= models.DateField( auto_now_add=True)
+    timestamps = models.DateTimeField(auto_now_add=True, null=True)
 
 
 class Withdraw(models.Model):
     amount=models.DecimalField( max_digits=12, decimal_places=2)
     reason= models.CharField(max_length=500)
-    date= models.DateField( auto_now_add=True)
+    timestamps = models.DateTimeField(auto_now_add=True, null=True)
 
 

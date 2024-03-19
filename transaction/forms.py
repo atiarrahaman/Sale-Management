@@ -6,7 +6,7 @@ from .models import Deposite,Exprensive,Withdraw
 class ExpensiveForm(forms.ModelForm):
     class Meta:
         model=Exprensive
-        fields=['amount','supplyer','reason','invoice_picture']
+        fields=['amount','supplier','reason','invoice_picture']
 
 
 
