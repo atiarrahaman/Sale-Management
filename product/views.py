@@ -6,10 +6,15 @@ from django.views.generic import CreateView, UpdateView, DetailView, DeleteView
 from django.views import View
 from django.urls import reverse_lazy
 from django.shortcuts import render, redirect
-from .models import Cart,CartProduct
-from django.views.generic import View,ListView, TemplateView
+from .models import Cart, CartProduct, Order,OrderProduct
+from django.views.generic import View, ListView, TemplateView
 from django.contrib import messages
-from .form import CartProductForm
+from .form import CartProductForm, OrderForm
+from decimal import Decimal
+from django.core.exceptions import ObjectDoesNotExist
+from django.shortcuts import get_object_or_404
+from django.template.loader import render_to_string
+
 class AddProductView(CreateView):
     template_name = 'add_product.html'
     success_url = ''
@@ -37,13 +42,15 @@ class AddProductView(CreateView):
 
 class CartView(TemplateView):
     template_name = 'cart.html'
+
     def post(self, request, *args, **kwargs):
         product_id = request.POST.get('product')
-        product_obj = Product.objects.get(id=product_id)
+        product_obj = get_object_or_404(Product, id=product_id)
         cart_id = request.session.get("cart_id")
-        if cart_id:
+
+        try:
             cart_obj = Cart.objects.get(id=cart_id)
-        else:
+        except ObjectDoesNotExist:
             cart_obj = Cart.objects.create(user=request.user, total=0)
             request.session['cart_id'] = cart_obj.id
 
@@ -52,8 +59,9 @@ class CartView(TemplateView):
             cartproduct = form.save(commit=False)
             cartproduct.cart = cart_obj
             cartproduct.quantity = form.cleaned_data['quantity']
-            cartproduct.price=product_obj.price
-            cartproduct.subtotal = product_obj.price * cartproduct.quantity
+            cartproduct.price = product_obj.price
+            cartproduct.subtotal = product_obj.price * \
+                Decimal(cartproduct.quantity)
             cartproduct.save()
             cart_obj.total += cartproduct.subtotal
             cart_obj.save()
@@ -63,26 +71,84 @@ class CartView(TemplateView):
             messages.error(
                 request, 'Failed to add product to cart. Please try again.')
 
+        # Redirect to the cart view after adding a product
         return redirect('cart')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-
-        # Query cart products and total price
         cart_id = self.request.session.get("cart_id")
-        if cart_id:
+        try:
             cart_obj = Cart.objects.get(id=cart_id)
-            cart_products = CartProduct.objects.filter(cart=cart_obj)
+            cart_products = cart_obj.cartproduct_set.all()
             cart_total = cart_obj.total
-        else:
+        except ObjectDoesNotExist:
             cart_products = []
             cart_total = 0
 
-        context['form'] = CartProductForm()  # Initialize an empty form
+        context['form'] = CartProductForm()
         context['cart_products'] = cart_products
         context['cart_total'] = cart_total
         return context
 
+
+class OrderView(TemplateView):
+    template_name = 'order.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['order_form'] = OrderForm()
+
+        # Retrieve the order and order products
+        cart_id = self.request.session.get("cart_id")
+        try:
+            cart_obj = Cart.objects.get(id=cart_id)
+            order_products = cart_obj.cartproduct_set.all()
+            cart_total = cart_obj.total
+        except ObjectDoesNotExist:
+            order_products = []
+            cart_total = 0
+
+        context['order_products'] = order_products
+        context['order_total'] = cart_total
+        return context
+
+    def post(self, request, *args, **kwargs):
+        cart_id = request.session.get("cart_id")
+
+        try:
+            cart_obj = Cart.objects.get(id=cart_id)
+        except ObjectDoesNotExist:
+            pass
+
+        order_form = OrderForm(request.POST)
+        if order_form.is_valid():
+            order = order_form.save(commit=False)
+            order.total = cart_obj.total
+            order.save()
+            for cart_product in cart_obj.cartproduct_set.all():
+                OrderProduct.objects.create(
+                    order=order,
+                    product=cart_product.product,
+                    price=cart_product.price,
+                    quantity=cart_product.quantity,
+                    subtotal=cart_product.subtotal
+                )
+            cart_obj.cartproduct_set.all().delete()
+            del request.session['cart_id']
+            messages.success(request, 'Order placed successfully!')
+
+            # Render the print-friendly template
+            print_template = render_to_string('print_order.html', {
+                'order': order,
+                'order_products': order.orderproduct_set.all(),
+                'order_total': order.total
+            })
+            # Return an HttpResponse containing the print-friendly template content
+            return HttpResponse(print_template)
+
+        context = self.get_context_data()
+        context['order_form'] = order_form
+        return self.render_to_response(context)
 
 class ManageCartView(View):
     def get(self, request, *args, **kwargs):

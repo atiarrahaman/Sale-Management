@@ -60,3 +60,24 @@ class CartProduct(models.Model):
     subtotal = models.PositiveIntegerField()
     def __str__(self):
         return "Cart: " + str(self.cart.id) + "CartProduct: " + str(self.id)
+
+
+class Order(models.Model):
+    name = models.CharField(max_length=50)
+    phone= models.CharField(max_length=50)
+    total = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return "Order: " + str(self.id)
+
+
+class OrderProduct(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    price = models.PositiveIntegerField()
+    quantity = models.PositiveIntegerField()
+    subtotal = models.PositiveIntegerField()
+
+    def __str__(self):
+        return "Order: " + str(self.order.id) + "OrderProduct: " + str(self.id)
