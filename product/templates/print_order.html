@@ -17,7 +17,7 @@
         <thead>
             <tr>
                 <th>Product Name</th>
-                <th>Price</th>
+                <th>price</th>
                 <th>Quantity</th>
                 <th>Subtotal</th>
             </tr>
@@ -26,7 +26,7 @@
             {% for order_product in order_products %}
             <tr>
                 <td>{{ order_product.product.name }}</td>
-                <td>{{ order_product.product.price }}</td>
+                <td>{{ order_product.product.sell_price }}</td>
                 <td>{{ order_product.quantity }}</td>
                 <td>{{ order_product.subtotal }}</td>
             </tr>

@@ -1,5 +1,5 @@
 from django.db import models
-from product.models import Supplier
+from inventory.models import Supplier
 # Create your models here.
 
 

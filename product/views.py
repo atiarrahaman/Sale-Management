@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.http import HttpResponse
-from .form import ProductForm, CategoryForm
-from .models import Product, Category
+from .models import Product
+from inventory.models import  Category, Supplier
 from django.views.generic import CreateView, UpdateView, DetailView, DeleteView
 from django.views import View
 from django.urls import reverse_lazy
@@ -14,6 +14,7 @@ from decimal import Decimal
 from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
+from .form import ProductForm
 
 class AddProductView(CreateView):
     template_name = 'add_product.html'
@@ -21,23 +22,16 @@ class AddProductView(CreateView):
 
     def get(self, request):
         product_form = ProductForm()
-        category_form = CategoryForm()
-        return render(request, self.template_name, {'product_form': product_form, 'category_form': category_form})
+        return render(request, self.template_name, {'product_form': product_form})
 
     def post(self, request):
         product_form = ProductForm(request.POST)
-        category_form = CategoryForm(request.POST)
 
-        if 'product_submit' in request.POST:
-            if product_form.is_valid():
-                product_form.save()
-                return redirect('product')
-        elif 'category_submit' in request.POST:
-            if category_form.is_valid():
-                category_form.save()
-                return redirect('product')
+        if product_form.is_valid():
+            product_form.save()
+            return redirect('product')
 
-        return render(request, self.template_name, {'product_form': product_form, 'category_form': category_form})
+        return render(request, self.template_name, {'product_form': product_form})
 
 
 class CartView(TemplateView):
@@ -59,8 +53,8 @@ class CartView(TemplateView):
             cartproduct = form.save(commit=False)
             cartproduct.cart = cart_obj
             cartproduct.quantity = form.cleaned_data['quantity']
-            cartproduct.price = product_obj.price
-            cartproduct.subtotal = product_obj.price * \
+            cartproduct.sell_price = product_obj.sell_price
+            cartproduct.subtotal = product_obj.sell_price * \
                 Decimal(cartproduct.quantity)
             cartproduct.save()
             cart_obj.total += cartproduct.subtotal
@@ -129,7 +123,7 @@ class OrderView(TemplateView):
                 OrderProduct.objects.create(
                     order=order,
                     product=cart_product.product,
-                    price=cart_product.price,
+                    sell_price=cart_product.sell_price,
                     quantity=cart_product.quantity,
                     subtotal=cart_product.subtotal
                 )
@@ -160,15 +154,15 @@ class ManageCartView(View):
 
         if action == 'inc':
             cp_obj.quantity += 1
-            cp_obj.subtotal += cp_obj.price
+            cp_obj.subtotal += cp_obj.sell_price
             cp_obj.save()
-            cart_obj.total += cp_obj.price
+            cart_obj.total += cp_obj.sell_price
             cart_obj.save()
         elif action == 'dcr':
             cp_obj.quantity -= 1
-            cp_obj.subtotal -= cp_obj.price
+            cp_obj.subtotal -= cp_obj.sell_price
             cp_obj.save()
-            cart_obj.total -= cp_obj.price
+            cart_obj.total -= cp_obj.sell_price
             cart_obj.save()
             if cp_obj.quantity == 0:
                 cp_obj.delete()

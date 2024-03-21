@@ -5,32 +5,18 @@ from django.contrib.auth.models import User
 # Create your models here.
 
 
-class Supplier(models.Model):
-    name = models.CharField(max_length=150)
-    address=models.CharField(max_length=200)
-    tax_id = models.PositiveIntegerField()
-    phone = models.PositiveIntegerField(blank=True, null=True)
-
-    def __str__(self) -> str:
-        return self.name
-
-class Category(models.Model):
-    name = models.CharField(max_length=150)
-    slug = models.SlugField(max_length=50, unique=True)
-
-    def __str__(self):
-        return self.name
-
-
 class Product(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE,blank=True, null=True)
+
+    supplier = models.ForeignKey(
+        'inventory.Supplier', on_delete=models.CASCADE, blank=True, null=True)
     name = models.CharField(max_length=50, unique=True)
     qty = models.IntegerField(blank=True, null=True)
-    price = models.DecimalField(
-        max_digits=5, decimal_places=2, blank=True, null=True)
+    sell_price = models.DecimalField(
+        decimal_places=2, max_digits=12, blank=True, null=True)
+    buy_price = models.DecimalField(
+        decimal_places=2, max_digits=12, blank=True, null=True)
     category = models.ForeignKey(
-        Category, on_delete=models.CASCADE, blank=True, null=True)
+        'inventory.Category', on_delete=models.CASCADE, blank=True, null=True)
     serial_key = models.UUIDField(
         default=uuid.uuid4, editable=False, unique=True)
     qr_image = models.ImageField(upload_to='qr_image', blank=True, null=True)
@@ -80,4 +66,4 @@ class OrderProduct(models.Model):
     subtotal = models.PositiveIntegerField()
 
     def __str__(self):
-        return "Order: " + str(self.order.id) + "OrderProduct: " + str(self.id)
+        return "Order: " + str(self.cart.id) + "OrderProduct: " + str(self.id)

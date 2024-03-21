@@ -1,15 +1,17 @@
 from django import forms
-from .models import Product, Category, CartProduct,Order
-
+from .models import Product,CartProduct,Order
+from inventory .models import Category, Supplier
 # Product Form
 class ProductForm(forms.ModelForm):
     name = forms.CharField(widget=forms.TextInput(
         attrs={'class': 'form-control'}))
     qty = forms.CharField(widget=forms.TextInput(
         attrs={'class': 'form-control'}))
-    price = forms.CharField(widget=forms.TextInput(
+    sell_price = forms.CharField(widget=forms.TextInput(
         attrs={'class': 'form-control'}))
     category = forms.ModelChoiceField(queryset=Category.objects.all(
+    ), widget=forms.Select(attrs={'class': 'form-control'}))
+    supplier = forms.ModelChoiceField(queryset=Supplier.objects.all(
     ), widget=forms.Select(attrs={'class': 'form-control'}))
     qr_image = forms.CharField(widget=forms.TextInput(
         attrs={'class': 'form-control'}))
@@ -20,14 +22,9 @@ class ProductForm(forms.ModelForm):
 
     class Meta:
         model = Product
-        fields = ['id', 'name', 'price', 'qty',
-                  'category', 'qr_image', 'image', 'status']
+        fields = ['id', 'name', 'sell_price', 'qty',
+                  'category', 'qr_image', 'image', 'status','supplier']
 
-
-class CategoryForm(forms.ModelForm):
-    class Meta:
-        model = Category
-        fields = ['name',]
 
 
 class CartProductForm(forms.ModelForm):

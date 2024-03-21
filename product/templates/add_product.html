@@ -1,30 +1,13 @@
 {% extends 'base.html' %} {% block title %}Home Page{% endblock %} 
 {% load crispy_forms_tags %} {% block content %}
 <div class="d-flex justify-content-center align-items-center">
-  <div clo-md-4>
-    <div class="card shadow-lg rounded-5">
-      <div class="card-body">
-        <h5 class="card-title">
-          <form
-            action=""
-            class="w-100 shadow-lg rounded-3"
-            method="post"
-            enctype="multipart/form-data"
-          >
-            {% csrf_token %} {{ category_form | crispy }}
-            <button type="submit" name="category_submit">Add Category</button>
-          </form>
-        </h5>
-      </div>
-    </div>
-  </div>
-
+  
   {% if product_form.non_field_errors %} 
   {% for error in product_form.non_field_errors %}
   <div class="alert alert-danger" role="alert">
     {{ error}}</div>
   {% endfor %} {% endif %}
-  <div class="col-md-8 shadow-lg mt-5">
+  <div class="col-md-8 shadow-lg mt-5 p-4">
     <form class="row g-3" method="POST" enctype="multipart/form-data">
       {% csrf_token %}
       <div class="col-md-4">
@@ -50,12 +33,12 @@
         </div>
       </div>
       <div class="col-md-4">
-        <label for="{{ product_form.price.id_for_label }}" class="form-label"
-          >Product Price</label
+        <label for="{{ product_form.sell_price.id_for_label }}" class="form-label"
+          >Product sell_price</label
         >
         <div>
-          {{ product_form.price }} {% if product_form.price.errors %} 
-          {% for error in product_form.price.errors %}
+          {{ product_form.sell_price }} {% if product_form.sell_price.errors %} 
+          {% for error in product_form.sell_price.errors %}
           <p class="text-danger">{{ error }}</p>
           {% endfor %} {% endif %}
         </div>
@@ -71,7 +54,18 @@
           {% endfor %} {% endif %}
         </div>
       </div>
-      <div class="mb-4">
+      <div class="col-md-4">
+        <label for="{{ product_form.supplier.id_for_label }}" class="form-label"
+          >Product Supplier</label
+        >
+        <div>
+          {{ product_form.supplier }} {% if product_form.supplier.errors %} 
+          {% for error in product_form.supplier.errors %}
+          <p class="text-danger">{{ error }}</p>
+          {% endfor %} {% endif %}
+        </div>
+      </div>
+      <div class="col-md-4">
         <label for="{{ product_form.image.id_for_label }}" class="form-label"
           >Product Photo</label
         >
@@ -97,7 +91,7 @@
         {% endfor %} {% endif %}
       </div>
 
-      <div class="mb-4">
+      <div class="col-md-4">
         <label for="{{ product_form.qr_image.id_for_label }}" class="form-label"
           >QR Code Image</label
         >
