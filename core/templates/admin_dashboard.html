@@ -6,7 +6,8 @@
 {% if user.is_authenticated and user.is_staff and user.is_superuser %}
 {% include 'topside.html' %}
 
-<div class="row ">
+<div class="container">
+    <div class="row ">
     <div class="col-md-6 my-4">
         <div class="bg-white">
             <div class="card-body">
@@ -148,6 +149,7 @@
       </tr>
     </tbody>
   </table>
+</div>
 </div>
 {% else %}
 {% include 'staff_dashboard.html' %}

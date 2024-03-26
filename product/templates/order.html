@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}Order{% endblock %}
+{% load crispy_forms_tags %}
+{% load humanize %}
+{% block content %}
+<div class="container">
+    <div class="row d-flex justify-content-center align-items-center mt-5">
+        <div class="col-md-4">
+            <h1 class="mb-5 text-center">Customer Detail</h1>
+            <form action="" method="post" id="orderForm" class="shadow-lg p-4 rounded-5">
+                {% csrf_token %}
+                {{ order_form | crispy}}
+                <button class="btn btn-primary" type="submit">Confirm Order</button>
+            </form>
+        </div>
+        <div class="col-md-8" id="orderProducts" style="display: none;">
+            <h2>Order Products</h2>
+            
+        </div>
+    </div>
+</div>
+
+<script>
+    function showOrderProducts() {
+        
+        document.getElementById("orderForm").style.display = "none";
+        document.getElementById("orderProducts").style.display = "block";
+
+        // Open a new window with the print-friendly template content
+        var printWindow = window.open("", "_blank");
+        printWindow.document.write(document.getElementById("printTemplate").innerHTML);
+        printWindow.document.close();
+
+        // Wait for the new window to load before triggering printing
+        printWindow.onload = function() {
+            printWindow.print(); // Trigger printing in the new window
+        };
+    }
+</script>
+
+{% endblock content %}
