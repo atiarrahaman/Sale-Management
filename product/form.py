@@ -7,24 +7,23 @@ class ProductForm(forms.ModelForm):
         attrs={'class': 'form-control'}))
     qty = forms.CharField(widget=forms.TextInput(
         attrs={'class': 'form-control'}))
+    buy_price = forms.CharField(widget=forms.TextInput(
+        attrs={'class': 'form-control'}))
     sell_price = forms.CharField(widget=forms.TextInput(
         attrs={'class': 'form-control'}))
     category = forms.ModelChoiceField(queryset=Category.objects.all(
     ), widget=forms.Select(attrs={'class': 'form-control'}))
     supplier = forms.ModelChoiceField(queryset=Supplier.objects.all(
     ), widget=forms.Select(attrs={'class': 'form-control'}))
-    qr_image = forms.CharField(widget=forms.TextInput(
-        attrs={'class': 'form-control'}))
-    image = forms.CharField(widget=forms.TextInput(
-        attrs={'class': 'form-control'}))
-    status = forms.BooleanField(widget=forms.CheckboxInput(
+    image= forms.FileInput(attrs={'class': 'form-control'}),
+    qr_image= forms.FileInput(attrs={'class': 'form-control'}),
+    is_active = forms.BooleanField(widget=forms.CheckboxInput(
         attrs={'class': 'form-check-input custom-checkbox'}), required=False)
 
     class Meta:
         model = Product
-        fields = ['id', 'name', 'sell_price', 'qty',
-                  'category', 'qr_image', 'image', 'status','supplier']
-
+        fields = ['name', 'qty', 'buy_price', 'sell_price',
+                  'category', 'supplier', 'image', 'qr_image', 'is_active']
 
 
 class CartProductForm(forms.ModelForm):

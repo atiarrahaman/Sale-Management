@@ -29,42 +29,43 @@ class SupplierForm(forms.ModelForm):
         }
 
 
-class ProductInventoryForm(forms.ModelForm):
-    category = forms.ModelChoiceField(queryset=Category.objects.all(
-    ), widget=forms.Select(attrs={'class': 'form-control'}))
-    supplier = forms.ModelChoiceField(queryset=Supplier.objects.all(
-    ), widget=forms.Select(attrs={'class': 'form-control'}))
-    status = forms.BooleanField(widget=forms.CheckboxInput(
-        attrs={'class': 'form-check-input custom-checkbox'}), required=False)
-    class Meta:
-        model = Product
-        fields = ['name', 'qty', 'buy_price', 'sell_price',
-                  'category', 'image', 'qr_image', 'supplier', 'is_active']
-        widgets={
-            'name':forms.TextInput(
-                attrs={'class': 'form-control'}),
-            'qty': forms.TextInput(
-        attrs={'class': 'form-control'}),
-            'buy_price':forms.TextInput(
-        attrs={'class': 'form-control'}),
-            'sell_price':forms.TextInput(
-        attrs={'class': 'form-control'}),
+
+# class ProductInventoryForm(forms.ModelForm):
+#     category = forms.ModelChoiceField(queryset=Category.objects.all(
+#     ), widget=forms.Select(attrs={'class': 'form-control'}))
+#     supplier = forms.ModelChoiceField(queryset=Supplier.objects.all(
+#     ), widget=forms.Select(attrs={'class': 'form-control'}))
+#     status = forms.BooleanField(widget=forms.CheckboxInput(
+#         attrs={'class': 'form-check-input custom-checkbox'}), required=False)
+#     class Meta:
+#         model = Product
+#         fields = ['name', 'qty', 'buy_price', 'sell_price',
+#                   'category', 'image', 'qr_image', 'supplier', 'is_active']
+#         widgets={
+#             'name':forms.TextInput(
+#                 attrs={'class': 'form-control'}),
+#             'qty': forms.TextInput(
+#         attrs={'class': 'form-control'}),
+#             'buy_price':forms.TextInput(
+#         attrs={'class': 'form-control'}),
+#             'sell_price':forms.TextInput(
+#         attrs={'class': 'form-control'}),
             
-    'qr_image' : forms.TextInput(
-        attrs={'class': 'form-control'}),
-    'image' : forms.TextInput(
-        attrs={'class': 'form-control'}),
+#     'qr_image' : forms.TextInput(
+#         attrs={'class': 'form-control'}),
+#     'image' : forms.TextInput(
+#         attrs={'class': 'form-control'}),
     
-        }
+#         }
 
-    def save(self, commit=True):
-        product = super().save(commit=commit) 
-        if commit:
-            total = product.buy_price * product.qty
-            Inventory.objects.create(
-                user=self.instance.user,
-                product=product,
-                total=total
-            )
+#     def save(self, commit=True):
+#         product = super().save(commit=commit) 
+#         if commit:
+#             total = product.buy_price * product.qty
+#             Inventory.objects.create(
+#                 user=self.instance.user,
+#                 product_name=product,
+#                 total=total
+#             )
 
-        return product
+#         return product

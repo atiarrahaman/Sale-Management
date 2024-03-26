@@ -24,11 +24,9 @@ class Category(models.Model):
 #Inventory models
 class Inventory(models.Model):
     user=models.ForeignKey(User, on_delete=models.CASCADE)
-    product = models.ForeignKey(
-        'product.Product', on_delete=models.CASCADE)
-    total = models.DecimalField(decimal_places=2, max_digits=12)
+    total = models.DecimalField(decimal_places=2, max_digits=12, default=0)
     timestamps = models.DateTimeField(auto_now_add=True, null=True)
 
 
     def __str__(self) -> str:
-        return "Inventory: " + str(self.id) + "Product: " + str(self.product.name)
+        return "Inventory: " + str(self.id) + "To: " + str(self.total)

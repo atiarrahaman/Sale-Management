@@ -6,9 +6,10 @@ from django.contrib.auth.models import User
 
 
 class Product(models.Model):
-
     supplier = models.ForeignKey(
         'inventory.Supplier', on_delete=models.CASCADE, blank=True, null=True)
+    inventory = models.ForeignKey(
+        'inventory.Inventory', on_delete=models.CASCADE, related_name='inventory',null=True,blank=True)
     name = models.CharField(max_length=50, unique=True)
     qty = models.IntegerField(blank=True, null=True)
     sell_price = models.DecimalField(
@@ -44,13 +45,14 @@ class CartProduct(models.Model):
     price = models.PositiveIntegerField()
     quantity = models.PositiveIntegerField()
     subtotal = models.PositiveIntegerField()
+
     def __str__(self):
         return "Cart: " + str(self.cart.id) + "CartProduct: " + str(self.id)
 
 
 class Order(models.Model):
     name = models.CharField(max_length=50)
-    phone= models.CharField(max_length=50)
+    phone = models.CharField(max_length=50)
     total = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
 
