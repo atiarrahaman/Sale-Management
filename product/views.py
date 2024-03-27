@@ -15,6 +15,8 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
 from .form import ProductForm
+from datetime import datetime
+from django.http import HttpResponseNotAllowed
 
 class AddProductView(CreateView):
     template_name = 'add_product.html'
@@ -53,7 +55,7 @@ class CartView(TemplateView):
             cartproduct = form.save(commit=False)
             cartproduct.cart = cart_obj
             cartproduct.quantity = form.cleaned_data['quantity']
-            cartproduct.sell_price = product_obj.sell_price
+            cartproduct.price = product_obj.sell_price
             cartproduct.subtotal = product_obj.sell_price * \
                 Decimal(cartproduct.quantity)
             cartproduct.save()
@@ -123,7 +125,7 @@ class OrderView(TemplateView):
                 OrderProduct.objects.create(
                     order=order,
                     product=cart_product.product,
-                    sell_price=cart_product.sell_price,
+                    price=cart_product.price,
                     quantity=cart_product.quantity,
                     subtotal=cart_product.subtotal
                 )
@@ -143,6 +145,8 @@ class OrderView(TemplateView):
         context = self.get_context_data()
         context['order_form'] = order_form
         return self.render_to_response(context)
+
+
 
 class ManageCartView(View):
     def get(self, request, *args, **kwargs):
@@ -173,3 +177,32 @@ class ManageCartView(View):
         else:
             pass
         return redirect('cart')
+
+
+class AllOrderView(TemplateView):
+    template_name = 'all_order.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        queryset = Order.objects.all()
+        order_data = {order: OrderProduct.objects.filter(
+            order=order) for order in queryset}
+        context['order_data'] = order_data
+        return context
+
+    def post(self, request, *args, **kwargs):
+        start_date_str = request.POST.get('start_date')
+        end_date_str = request.POST.get('end_date')
+
+        if start_date_str and end_date_str:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+
+            queryset = Order.objects.filter(
+                created_at__date__gte=start_date, created_at__date__lte=end_date)
+            order_data = {order: OrderProduct.objects.filter(
+                order=order) for order in queryset}
+            context = {'order_data': order_data}
+            return render(request, self.template_name, context)
+        else:
+            return HttpResponseNotAllowed(['POST'])

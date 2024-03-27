@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% block title %}Inventory{% endblock %}
+{% load crispy_forms_tags %} 
+{% block content %}
+<div class="container">
+    <div id="inventoryData" class="mt-5">
+        <form method="post" action="{% url 'all_order' %}" class="d-flex justify-content-center mb-4">
+            {% csrf_token %}
+            <div class="input-group">
+                <label for="start_date" class="input-group-text">From:</label>
+                <input type="date" class="form-control" id="start_date" name="start_date" />
+            </div>
+            <div class="input-group mx-2">
+                <label for="end_date" class="input-group-text">To:</label>
+                <input type="date" class="form-control" id="end_date" name="end_date" />
+            </div>
+            <div class="">
+                <button type="submit" class="btn btn-primary px-4 fs-4">Filter</button>
+            </div>
+        </form>
+        <table class="table table-bordered bold-table-border">
+            <thead class="thead-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Phone</th>
+                    <th>Date</th>
+                    <th>Total</th>
+                    <th>Products</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order, order_products in order_data.items %}
+                <tr>
+                    <td>{{ order.id }}</td>
+                    <td>{{ order.name }}</td>
+                    <td>{{ order.phone }}</td>
+                    <td>{{ order.created_at }}</td>
+                    <td>{{ order.total }}</td>
+                    <td>
+                        <table class="table table-bordered">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Price</th>
+                                    <th>Quantity</th>
+                                    <th>Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for order_product in order_products %}
+                                <tr>
+                                    <td>{{ order_product.product.name }}</td>
+                                    <td>{{ order_product.price }}</td>
+                                    <td>{{ order_product.quantity }}</td>
+                                    <td>{{ order_product.subtotal }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock content %}
