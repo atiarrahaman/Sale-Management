@@ -68,4 +68,4 @@ class OrderProduct(models.Model):
     subtotal = models.PositiveIntegerField()
 
     def __str__(self):
-        return "Order: " + str(self.cart.id) + "OrderProduct: " + str(self.id)
+        return "Order: " + str(self.order.id) + "OrderProduct: " + str(self.id)

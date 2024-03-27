@@ -5,7 +5,7 @@ from django.contrib import messages
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.views import View
-from product.models import Product
+from product.models import Product,Order
 from transaction.models import Exprensive
 from django.utils.decorators import method_decorator
 from django.db.models import Sum
@@ -44,11 +44,13 @@ class AdminHomeView(View):
 
     def get(self, request, *args, **kwargs):
         product = Product.objects.all()
+        order=Order.objects.all()
         context = {
             'object_list': self.get_queryset(),
             'balance': self.balance,
             'total': self.total,
-            'pets': product,
+            'product': product,
+            'order': order,
         }
         return render(request, self.template_name, context)
 

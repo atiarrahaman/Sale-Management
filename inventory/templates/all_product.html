@@ -1,0 +1,43 @@
+{% extends 'base.html' %} {% block title %}Inventory{% endblock %} {% load
+crispy_forms_tags %} {% block content %}
+<div class="container">
+
+  <div id="productData" class="mt-5">
+    <div class=" my-3  ">
+        <form action="" class="col-md-12 mb-2 card card-body ">
+            <div class="text-center">
+                {{myfilter.form}}
+                <button type="submit" class="btn btn-primary badge-pill">Search</button>
+
+            </div>
+        </form>
+    </div>
+    <table class="table table-bordered">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>Product</th>
+                            <th>Category</th>
+                            <th>Supplier Name</th>
+                            <th>Quantity</th>
+                            <th>Buy Price</th>
+                            <th>Sell Price</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in product %}
+                        <tr>
+                            <td>{{ product.name }}</td>
+                            <td>{{ product.category.name }}</td>
+                            <td>{{ product.supplier.name }}</td>
+                            <td>{{ product.qty }}</td>
+                            <td>{{ product.buy_price }}</td>
+                            <td>{{ product.sell_price }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+  </div>
+
+</div>
+
+{% endblock content %}
