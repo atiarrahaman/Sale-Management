@@ -6,5 +6,4 @@ urlpatterns = [
     path('admin_home/', AdminHomeView.as_view(), name='admin_home'),
     path('staff_home/', StaffHomeView.as_view(), name='staff_home'),
 
-
 ]

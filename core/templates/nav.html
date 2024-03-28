@@ -16,6 +16,9 @@
 
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
       <ul class="navbar-nav mr-auto">
+        {% if user.is_authenticated %}
+
+        {% endif %}
         <li class="nav-item active">
           <a class="nav-link text-white" href="{% url 'cart' %}"
             >Dashboard <span class="sr-only">(current)</span></a

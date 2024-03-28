@@ -16,14 +16,14 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path,include
+from django.views.generic import RedirectView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('', RedirectView.as_view(url='core/user_login/')),
     path('',include('transaction.urls')),
-    path('',include('product.urls')),
-    path('',include('inventory.urls')),
+    path('product/',include('product.urls')),
+    path('inventory/',include('inventory.urls')),
     path('',include('pos.urls')),
-    path('',include('core.urls')),
-    
-
+    path('core/',include('core.urls')),
 ]

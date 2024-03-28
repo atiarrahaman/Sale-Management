@@ -18,11 +18,11 @@ class UserLoginView(LoginView):
     def get_success_url(self):
         if self.request.user.is_staff:
             messages.success(self.request, "Welcome Admin ")
-            return reverse_lazy('admin_dashboard')
+            return reverse_lazy('admin_home')
         else:
             messages.success(
                 self.request, "Welcome! You are successfully logged in.")
-        return reverse_lazy('staff_dashboard')
+        return reverse_lazy('cart')
 
 
 class StaffHomeView(View):
@@ -84,4 +84,4 @@ class AdminHomeView(View):
 def user_logout(request):
     logout(request)
     messages.success(request, "Logout successfully")
-    return redirect('login')
+    return redirect('user_login')

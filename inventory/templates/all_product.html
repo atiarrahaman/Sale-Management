@@ -21,6 +21,7 @@ crispy_forms_tags %} {% block content %}
                             <th>Quantity</th>
                             <th>Buy Price</th>
                             <th>Sell Price</th>
+                            <th>Subtotal</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -29,9 +30,10 @@ crispy_forms_tags %} {% block content %}
                             <td>{{ product.name }}</td>
                             <td>{{ product.category.name }}</td>
                             <td>{{ product.supplier.name }}</td>
-                            <td>{{ product.qty }}</td>
+                            <td {% if product.qty < 10 %}style="color: red;"{% endif %}>{{ product.qty }} {{product.unit}}</td>
                             <td>{{ product.buy_price }}</td>
                             <td>{{ product.sell_price }}</td>
+                            <td>{{ product.subtotal}}</td>
                         </tr>
                         {% endfor %}
                     </tbody>

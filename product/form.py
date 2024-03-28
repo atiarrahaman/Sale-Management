@@ -19,10 +19,18 @@ class ProductForm(forms.ModelForm):
     qr_image= forms.FileInput(attrs={'class': 'form-control'}),
     is_active = forms.BooleanField(widget=forms.CheckboxInput(
         attrs={'class': 'form-check-input custom-checkbox'}), required=False)
+    UNIT_CHOICES = (
+        ("KG","KG"),
+        ("PCS","PCS"),
+        ("PACKET","PACKET"),
+        ("LITTER","LITTER"),
+    )
+    unit = forms.ChoiceField(choices=UNIT_CHOICES, widget=forms.Select(attrs={'class': 'form-control'}))
+
 
     class Meta:
         model = Product
-        fields = ['name', 'qty', 'buy_price', 'sell_price',
+        fields = ['name', 'qty', 'unit', 'buy_price', 'sell_price',
                   'category', 'supplier', 'image', 'qr_image', 'is_active']
 
 
