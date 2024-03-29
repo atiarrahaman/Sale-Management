@@ -4,6 +4,12 @@ import uuid
 from django.contrib.auth.models import User
 # Create your models here.
 
+UNIT =(
+    ("KG","KG"),
+    ("PCS","PCS"),
+    ("PACKET","PACKET"),
+    ("LITTER","LITTER"),
+)
 
 class Product(models.Model):
     supplier = models.ForeignKey(
@@ -12,10 +18,12 @@ class Product(models.Model):
         'inventory.Inventory', on_delete=models.CASCADE, related_name='inventory',null=True,blank=True)
     name = models.CharField(max_length=50, unique=True)
     qty = models.IntegerField(blank=True, null=True)
+    unit=models.CharField(max_length=15,choices=UNIT,default='PCS')
     sell_price = models.DecimalField(
         decimal_places=2, max_digits=12, blank=True, null=True)
     buy_price = models.DecimalField(
         decimal_places=2, max_digits=12, blank=True, null=True)
+    subtotal = models.IntegerField(null=True,blank=True,default=0)
     category = models.ForeignKey(
         'inventory.Category', on_delete=models.CASCADE, blank=True, null=True)
     serial_key = models.UUIDField(

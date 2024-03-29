@@ -18,7 +18,7 @@ from django.urls import reverse
 
 
 class NewProductView(TemplateView):
-    template_name = 'inventory.html'
+    template_name = 'add_new.html'
 
     def post(self, request, *args, **kwargs):
         product_form = ProductForm(request.POST)
@@ -28,6 +28,7 @@ class NewProductView(TemplateView):
         if product_form.is_valid():
             # Process product form submission
             product = product_form.save(commit=False)
+            product.subtotal = product.qty * product.buy_price
             product.save()
             inventory_id = request.session.get("inventory_id")
             try:
@@ -96,7 +97,7 @@ class AllProductView(View):
 
 
 class InventoryView(TemplateView):
-    template_name = 'manage_inventory.html'
+    template_name = 'inventory.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -141,7 +142,7 @@ class ManageInventoryView(View):
         inventory_obj = pro_obj.inventory
 
         if action == 'rmv':
-            inventory_obj.total -= pro_obj.buy_price
+            inventory_obj.total -= pro_obj.subtotal
             inventory_obj.save()
             pro_obj.delete()
         else:

@@ -1,0 +1,174 @@
+{% extends 'base.html' %} {% block title %}Inventory{% endblock %} {% load
+crispy_forms_tags %} {% block content %}
+
+<div id="addStaff" >
+    <h1 class="text-center mt-4">Add Staff Information</h1>
+
+    <div class="d-flex justify-content-center align-items-center">
+      {% if form.non_field_errors %} 
+      {% for error in form.non_field_errors %}
+      <div class="alert alert-danger" role="alert">{{ error}}</div>
+      {% endfor %} {% endif %}
+      <div class="col-md-6 shadow-lg mt-5 p-4 rounded-5">
+        <form class="row g-3" method="POST" enctype="multipart/form-data">
+          {% csrf_token %}
+          <div class="col-md-6">
+            <label
+              for="{{ form.username.id_for_label }}"
+              class="form-label"
+              >Staff User Name</label
+            >
+            <div>
+              {{ form.username }} 
+              {% if form.username.errors %} 
+              {% for error in form.username.errors %}
+              <p class="text-danger">{{ error }}</p>
+              {% endfor %} {% endif %}
+            </div>
+          </div>
+          <div class="col-md-6">
+            <label
+              for="{{ form.first_name.id_for_label }}"
+              class="form-label"
+              >First Name</label
+            >
+            <div>
+              {{ form.first_name }} 
+              {% if form.first_name.errors %} 
+              {% for error in form.first_name.errors %}
+              <p class="text-danger">{{ error }}</p>
+              {% endfor %} {% endif %}
+            </div>
+          </div>
+          <div class="col-md-6">
+            <label
+              for="{{ form.last_name.id_for_label }}"
+              class="form-label"
+              >Last Name</label
+            >
+            <div>
+              {{ form.last_name }} 
+              {% if form.last_name.errors %} 
+              {% for error in form.last_name.errors %}
+              <p class="text-danger">{{ error }}</p>
+              {% endfor %} {% endif %}
+            </div>
+          </div>
+          <div class="col-md-6">
+            <label
+              for="{{ form.last_name.id_for_label }}"
+              class="form-label"
+              >Email</label
+            >
+            <div>
+              {{ form.email }} 
+              {% if form.email.errors %} 
+              {% for error in form.email.errors %}
+              <p class="text-danger">{{ error }}</p>
+              {% endfor %} {% endif %}
+            </div>
+          </div>
+          <div class="col-md-4">
+            <label
+              for="{{ form.password1.id_for_label }}"
+              class="form-label"
+              >Password</label
+            >
+            <div>
+              {{ form.password1 }} 
+              {% if form.password1.errors %} 
+              {% for error in form.password1.errors %}
+              <p class="text-danger">{{ error }}</p>
+              {% endfor %} {% endif %}
+            </div>
+          </div>
+          <div class="col-md-4">
+            <label
+              for="{{ form.password1.id_for_label }}"
+              class="form-label"
+              >Confirm Password</label
+            >
+            <div>
+              {{ form.password2 }} 
+              {% if form.password2.errors %} 
+              {% for error in form.password2.errors %}
+              <p class="text-danger">{{ error }}</p>
+              {% endfor %} {% endif %}
+            </div>
+          </div>
+          
+          <div class="col-md-4">
+            <label
+              for="{{ form.phone.id_for_label }}"
+              class="form-label"
+              >Contact Number</label
+            >
+            <div>
+              {{ form.phone }} 
+              {% if form.phone.errors %} 
+              {% for error in form.phone.errors %}
+              <p class="text-danger">{{ error }}</p>
+              {% endfor %} {% endif %}
+            </div>
+          </div>
+          <div class="col-md-6">
+            <label
+              for="{{ form.address.id_for_label }}"
+              class="form-label"
+              >Address</label
+            >
+            <div>
+              {{ form.address }} 
+              {% if form.address.errors %} 
+              {% for error in form.address.errors %}
+              <p class="text-danger">{{ error }}</p>
+              {% endfor %} {% endif %}
+            </div>
+          </div>
+          
+          <div class="col-md-6">
+                <label
+                  for="{{ form.image.id_for_label }}"
+                  class="form-label"
+                  >Staff Photo</label
+                >
+                <div class="input-group">
+                  <input
+                    type="file"
+                    class="form-control"
+                    id="{{ form.image.id_for_label }}"
+                    name="{{ form.image.name }}"
+                  />
+                  {% if form.image.value %}
+                  <img
+                    src="{{ form.image.value.url }}"
+                    alt="Current Image"
+                    class="img-fluid rounded mt-2"
+                    style="max-height: 150px"
+                  />
+                  {% endif %}
+                </div>
+                {% if form.image.errors %} 
+                {% for error in form.image.errors %}
+                <p class="text-danger">{{ error }}</p>
+                {% endfor %} {% endif %}
+              </div>
+          <div class="col-md-6 my-3 mx-auto">
+            <br>
+            <div class="mx-auto d-block">
+              <button
+                class="btn btn-primary"
+                type="submit"
+                name="staff_submit"
+              >
+                Submit
+              </button>
+              <button class="btn btn-primary" type="reset">Reset</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+{% endblock content %}

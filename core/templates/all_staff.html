@@ -1,0 +1,44 @@
+{% extends 'base.html' %} {% block title %}Staff{% endblock %} {% load
+crispy_forms_tags %} {% block content %}
+<div class="container">
+
+  <div id="staffData" class="mt-5">
+    <div class=" my-3  ">
+        <form action="" class="col-md-12 mb-2 card card-body ">
+            <div class="text-center">
+                {{myfilter.form}}
+                <button type="submit" class="btn btn-primary badge-pill">Search</button>
+
+            </div>
+        </form>
+    </div>
+    <table class="table table-bordered">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Full Name</th>
+                            <th>Phone</th>
+                            <th>Address</th>
+                            <th>Photo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for i in staff %}
+                        <tr>
+                            <td>{{ i.username }}</td>
+                            <td>{{ i.email }}</td>
+                            <td>{{ i.first_name }} {{i.last_name}}</td>
+                            <td>{{i.phone}}</td>
+                            <td> {{i.address}}</td>
+                            <td> {{i.image.url}}</td>
+                            
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+  </div>
+
+</div>
+
+{% endblock content %}

@@ -10,6 +10,38 @@ from transaction.models import Exprensive
 from django.utils.decorators import method_decorator
 from django.db.models import Sum
 from datetime import datetime
+from django.contrib import messages
+from .forms import StaffCreationForm
+from .models import Staff
+from .filters import StaffFilter
+
+
+class StaffCreateView(View):
+    form_class = StaffCreationForm
+    template_name = 'staff_create.html'
+
+    def get(self, request, *args, **kwargs):
+        form = self.form_class()
+        return render(request, self.template_name, {'form': form})
+
+    def post(self, request, *args, **kwargs):
+        form = self.form_class(request.POST, request.FILES)
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.save()
+            staff = Staff.objects.create(
+                user=user,
+                address=form.cleaned_data['address'],
+                phone=form.cleaned_data['phone'],
+                image=form.cleaned_data['image']
+            )
+            messages.success(request, 'User and Staff created successfully.')
+            
+            return redirect('add_staff')
+        else:
+            messages.error(request, 'Error creating user and staff.')
+        return render(request, self.template_name, {'form': form})
+
 
 
 class UserLoginView(LoginView):
@@ -18,19 +50,25 @@ class UserLoginView(LoginView):
     def get_success_url(self):
         if self.request.user.is_staff:
             messages.success(self.request, "Welcome Admin ")
-            return reverse_lazy('admin_dashboard')
+            return reverse_lazy('admin_home')
         else:
             messages.success(
                 self.request, "Welcome! You are successfully logged in.")
-        return reverse_lazy('staff_dashboard')
+        return reverse_lazy('cart')
 
 
-class StaffHomeView(View):
-    template_name = 'staff_dashboard.html'
+class AllStaffView(View):
+    template_name = 'all_staff.html'
 
     def get(self, request):
-        data = Product.objects.all()
-        return render(request, self.template_name, {'data': data})
+        all_staff = Staff.objects.all()
+        myfilter = StaffFilter(request.GET, queryset=all_staff)
+        staff=myfilter.qs
+        context = {
+            'myfilter': myfilter,
+            'staff': staff
+        }
+        return render(request, self.template_name, context)
 
 
 class AdminHomeView(View):
@@ -84,4 +122,4 @@ class AdminHomeView(View):
 def user_logout(request):
     logout(request)
     messages.success(request, "Logout successfully")
-    return redirect('login')
+    return redirect('user_login')
