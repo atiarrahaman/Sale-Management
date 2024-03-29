@@ -158,15 +158,15 @@ class ManageCartView(View):
 
         if action == 'inc':
             cp_obj.quantity += 1
-            cp_obj.subtotal += cp_obj.sell_price
+            cp_obj.subtotal += cp_obj.price
             cp_obj.save()
-            cart_obj.total += cp_obj.sell_price
+            cart_obj.total += cp_obj.price
             cart_obj.save()
         elif action == 'dcr':
             cp_obj.quantity -= 1
-            cp_obj.subtotal -= cp_obj.sell_price
+            cp_obj.subtotal -= cp_obj.price
             cp_obj.save()
-            cart_obj.total -= cp_obj.sell_price
+            cart_obj.total -= cp_obj.price
             cart_obj.save()
             if cp_obj.quantity == 0:
                 cp_obj.delete()
