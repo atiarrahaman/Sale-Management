@@ -142,7 +142,7 @@ class ManageInventoryView(View):
         inventory_obj = pro_obj.inventory
 
         if action == 'rmv':
-            inventory_obj.total -= pro_obj.buy_price
+            inventory_obj.total -= pro_obj.subtotal
             inventory_obj.save()
             pro_obj.delete()
         else:
