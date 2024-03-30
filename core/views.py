@@ -14,6 +14,7 @@ from django.contrib import messages
 from .forms import StaffCreationForm
 from .models import Staff
 from .filters import StaffFilter
+from django.contrib.auth.models import User
 
 
 class StaffCreateView(View):
@@ -61,7 +62,7 @@ class AllStaffView(View):
     template_name = 'all_staff.html'
 
     def get(self, request):
-        all_staff = Staff.objects.all()
+        all_staff = User.objects.all()
         myfilter = StaffFilter(request.GET, queryset=all_staff)
         staff=myfilter.qs
         context = {

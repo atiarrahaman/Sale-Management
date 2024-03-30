@@ -29,9 +29,9 @@ crispy_forms_tags %} {% block content %}
                             <td>{{ i.username }}</td>
                             <td>{{ i.email }}</td>
                             <td>{{ i.first_name }} {{i.last_name}}</td>
-                            <td>{{i.phone}}</td>
-                            <td> {{i.address}}</td>
-                            <td> {{i.image.url}}</td>
+                            <td>{{i.staff.phone}}</td>
+                            <td> {{i.staff.address}}</td>
+                            <td class="text-center"><img class="rounded-circle" {{ i.staff.image.url }} style="width: 60px; height: 45px;" alt=""></td
                             
                         </tr>
                         {% endfor %}
