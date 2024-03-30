@@ -11,7 +11,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-^@9ejsq0$1g1a$84q-6)=x&(fq9nosd=jjhfnd_v_r#06+qlpo'
 CSRF_TRUSTED_ORIGINS = [
-    'https://sale-management.onrender.com', 'https://*.127.0.0.1']
+    'https://sale-management-z4oo.onrender.com', 'https://*.127.0.0.1']
+
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
