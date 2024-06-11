@@ -16,9 +16,7 @@
 
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
       <ul class="navbar-nav mr-auto">
-        {% if user.is_authenticated %}
-
-        {% endif %}
+        {% if user.is_authenticated %} {% endif %}
         <li class="nav-item active">
           <a class="nav-link text-white" href="{% url 'cart' %}"
             >Dashboard <span class="sr-only">(current)</span></a
@@ -29,21 +27,13 @@
             >Admin Dashboard <span class="sr-only">(current)</span></a
           >
         </li>
-        <li class="nav-item active">
-          <a class="nav-link text-white" href="{% url 'add_new' %}"
-            >Add New <span class="sr-only">(current)</span></a
-          >
-        </li>
+
         <li class="nav-item active">
           <a class="nav-link text-white" href="{% url 'inventory' %}"
             >Inventory <span class="sr-only">(current)</span></a
           >
         </li>
-        <li class="nav-item active">
-          <a class="nav-link text-white" href="{% url 'all_product' %}"
-            >All Product <span class="sr-only">(current)</span></a
-          >
-        </li>
+
         <li class="nav-item active">
           <a class="nav-link text-white" href="{% url 'cart' %}"
             >Cart <span class="sr-only">(current)</span></a
@@ -54,12 +44,57 @@
             >Orders <span class="sr-only">(current)</span></a
           >
         </li>
+        <li class="nav-item dropdown active">
+          <a
+            class="nav-link dropdown-toggle text-white"
+            href="#"
+            role="button"
+            data-bs-toggle="dropdown"
+            aria-expanded="false"
+          >
+            Product
+          </a>
+          <ul class="dropdown-menu">
+            <li>
+              <a class="dropdown-item" href="{% url 'add_new' %}">Add New</a>
+            </li>
+
+            <li>
+              <a class="dropdown-item" href="{% url 'all_product' %}"
+                >All Product</a
+              >
+            </li>
+          </ul>
+        </li>
+        <li class="nav-item dropdown active">
+          <a
+            class="nav-link dropdown-toggle text-white"
+            href="#"
+            role="button"
+            data-bs-toggle="dropdown"
+            aria-expanded="false"
+          >
+            Staff
+          </a>
+          <ul class="dropdown-menu">
+            <li>
+              <a class="dropdown-item" href="{% url 'add_staff' %}"
+                >New Staff</a
+              >
+            </li>
+
+            <li>
+              <a class="dropdown-item" href="{% url 'all_staff' %}"
+                >All Staff</a
+              >
+            </li>
+          </ul>
+        </li>
       </ul>
       <ul class="navbar-nav ml-auto">
         <li class="nav-item active">
-          <a class="nav-link text-white" href=""
-            >{{ user.username }} Profile
-            <span class="sr-only">(current)</span></a
+          <a class="nav-link text-white" href="{% url 'profile' %}"
+            >{{ user.username }} <span class="sr-only">(current)</span></a
           >
         </li>
         <li class="nav-item">

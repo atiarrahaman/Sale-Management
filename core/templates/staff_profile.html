@@ -1,0 +1,54 @@
+{% extends 'base.html' %} {% block title %}Staff{% endblock %} {% load
+crispy_forms_tags %} {% block content %}
+
+<style>
+  .card {
+    padding: 1.5em 0.5em 0.5em;
+    border-radius: 2em;
+    text-align: center;
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+  }
+</style>
+
+<div class="container">
+  <div class="row d-flex justify-content-center mt-5 mb-5">
+    <div class="col-md-6 m-auto">
+      <h4 class="bg-info p-2 text-center rounded">
+        MR. {{profile.user.username}}'s Profile
+      </h4>
+    </div>
+  </div>
+  <div
+    class="profile col-md-8 m-auto rounded-5 shadow-lg py-5"
+    style="background-color: rgb(234, 206, 247)"
+  >
+    <div class="jumbotron pt-2 pb-2">
+      <div class="title text-center mb-3"></div>
+      <div class="row d-flex justify-content-center align-items-center">
+        <div class="col-lg-4">
+          <a href="{% url 'edit_profile' %}"
+            ><img
+              style="width: 200px; height: 200px"
+              src="{{profile.image.url}}"
+              class="img-fluid rounded-circle"
+              alt=""
+          /></a>
+        </div>
+        <div class="col-lg-6">
+          <h5>User Name: {{profile.user.username}}</h5>
+          <h5>
+            Full Name: {{profile.user.first_name|title}}
+            {{profile.user.last_name|title}}
+          </h5>
+          <h5>Phone No: {{profile.phone}}</h5>
+          <h5>Education: {{profile.education}}  {{profile.point}}</h5>
+          <h5>Father Name: {{profile.father_name}}</h5>
+          <h5>Father Name: {{profile.mother_name}}</h5>
+          <h5>Address:{{profile.address}}</h5>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% endblock content %}
+</div>

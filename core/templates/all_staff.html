@@ -15,10 +15,14 @@ crispy_forms_tags %} {% block content %}
     <table class="table table-bordered">
                     <thead class="thead-light">
                         <tr>
+                            <th>ID</th>
                             <th>Username</th>
                             <th>Email</th>
                             <th>Full Name</th>
                             <th>Phone</th>
+                            <th>Education</th>
+                            <th>Father Name</th>
+                            <th>Mother Name</th>
                             <th>Address</th>
                             <th>Photo</th>
                         </tr>
@@ -26,12 +30,16 @@ crispy_forms_tags %} {% block content %}
                     <tbody>
                         {% for i in staff %}
                         <tr>
+                            <td>{{ i.id }}</td>
                             <td>{{ i.username }}</td>
                             <td>{{ i.email }}</td>
                             <td>{{ i.first_name }} {{i.last_name}}</td>
                             <td>{{i.staff.phone}}</td>
+                            <td>{{i.staff.education}} {{i.staff.point}}</td>
+                            <td> {{i.staff.father_name}}</td>
+                            <td> {{i.staff.mother_name}}</td>
                             <td> {{i.staff.address}}</td>
-                            <td class="text-center"><img class="rounded-circle" {{ i.staff.image.url }} style="width: 60px; height: 45px;" alt=""></td
+                            <td class="text-center"><img class="rounded-circle" src="{{ i.staff.image.url }}" style="width: 60px; height: 45px;" alt=""></td
                             
                         </tr>
                         {% endfor %}

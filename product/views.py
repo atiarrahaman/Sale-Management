@@ -17,6 +17,7 @@ from django.template.loader import render_to_string
 from .form import ProductForm
 from datetime import datetime
 from django.http import HttpResponseNotAllowed
+from django.db.models import Sum
 
 class AddProductView(CreateView):
     template_name = 'add_product.html'
@@ -185,9 +186,12 @@ class AllOrderView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         queryset = Order.objects.all()
+        grand_total = queryset.aggregate(total=Sum('total'))['total'] or 0
+
         order_data = {order: OrderProduct.objects.filter(
             order=order) for order in queryset}
         context['order_data'] = order_data
+        context['grand_total'] = grand_total
         return context
 
     def post(self, request, *args, **kwargs):
@@ -200,9 +204,10 @@ class AllOrderView(TemplateView):
 
             queryset = Order.objects.filter(
                 created_at__date__gte=start_date, created_at__date__lte=end_date)
+            grand_total = queryset.aggregate(total=Sum('total'))['total'] or 0
             order_data = {order: OrderProduct.objects.filter(
                 order=order) for order in queryset}
-            context = {'order_data': order_data}
+            context = {'order_data': order_data, 'grand_total': grand_total}
             return render(request, self.template_name, context)
         else:
             return HttpResponseNotAllowed(['POST'])

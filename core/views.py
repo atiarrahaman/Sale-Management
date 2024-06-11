@@ -11,10 +11,11 @@ from django.utils.decorators import method_decorator
 from django.db.models import Sum
 from datetime import datetime
 from django.contrib import messages
-from .forms import StaffCreationForm
+from .forms import StaffCreationForm,ProfileUpdateForm
 from .models import Staff
 from .filters import StaffFilter
 from django.contrib.auth.models import User
+from django.contrib.auth.views import PasswordChangeView
 
 
 class StaffCreateView(View):
@@ -43,7 +44,32 @@ class StaffCreateView(View):
             messages.error(request, 'Error creating user and staff.')
         return render(request, self.template_name, {'form': form})
 
+class StaffProfile(View):
+    template_name='staff_profile.html'
+    def get(self, request):
+        profile=Staff.objects.get(user=request.user)
+        context = {
+            'profile': profile,
+        }
+        return render(request, self.template_name, context)
 
+
+class ProfileUpdateView(View):
+    template_name = 'update_profile.html'
+
+    def get(self, request):
+        staff_instance = Staff.objects.get(user=request.user)
+        form = ProfileUpdateForm(instance=staff_instance)
+        return render(request, self.template_name, {'form': form})
+
+    def post(self, request):
+        staff_instance = Staff.objects.get(user=request.user)
+        form = ProfileUpdateForm(
+            request.POST, request.FILES, instance=staff_instance)
+        if form.is_valid():
+            form.save()
+            return redirect('profile')
+        return render(request, self.template_name, {'form': form})
 
 class UserLoginView(LoginView):
     template_name = 'login.html'
@@ -62,7 +88,7 @@ class AllStaffView(View):
     template_name = 'all_staff.html'
 
     def get(self, request):
-        all_staff = User.objects.all()
+        all_staff = User.objects.filter(is_superuser=False)
         myfilter = StaffFilter(request.GET, queryset=all_staff)
         staff=myfilter.qs
         context = {
@@ -70,7 +96,10 @@ class AllStaffView(View):
             'staff': staff
         }
         return render(request, self.template_name, context)
-
+    
+class CustomPasswordChangeView(PasswordChangeView):
+    template_name = 'change_password.html'
+    success_url = reverse_lazy('password_change_done') 
 
 class AdminHomeView(View):
     template_name = 'admin_dashboard.html'

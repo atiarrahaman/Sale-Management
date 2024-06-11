@@ -14,6 +14,8 @@ from django.views import View
 from .filters import ProductFilter
 from django.http import HttpResponseRedirect
 from django.urls import reverse
+from django.db.models import Sum
+from django.db.models.functions import TruncMonth
 # Create your views here.
 
 
@@ -87,13 +89,70 @@ class AllProductView(View):
 
     def get(self, request, *args, **kwargs):
         all_product = Product.objects.all()
+
         myfilter = ProductFilter(request.GET, queryset=all_product)
-        product = myfilter.qs
+        products = myfilter.qs
+
+        total_buy_price = products.aggregate(total_buy_price=Sum('buy_price'))[
+            'total_buy_price'] or 0
+        total_sell_price = products.aggregate(total_sell_price=Sum('sell_price'))[
+            'total_sell_price'] or 0
+        interest = total_sell_price - total_buy_price
+
         context = {
             'myfilter': myfilter,
-            'product': product
+            'product': products,
+            'total_buy_price': total_buy_price,
+            'total_sell_price': total_sell_price,
+            'interest': interest
         }
         return render(request, self.template_name, context)
+
+# class InventoryView(TemplateView):
+#     template_name = 'inventory.html'
+
+#     def get_context_data(self, **kwargs):
+#         context = super().get_context_data(**kwargs)
+
+#         start_date_str = self.request.GET.get('start_date')
+#         end_date_str = self.request.GET.get('end_date')
+
+#         if start_date_str and end_date_str:
+#             start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+#             end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+#             queryset = Inventory.objects.filter(
+#                 timestamps__date__gte=start_date, timestamps__date__lte=end_date)
+#         else:
+#             queryset = Inventory.objects.all()
+
+#         inventory_data = {}
+#         grand_total = 0
+
+#         for inventory in queryset:
+#             products = Product.objects.filter(inventory=inventory)
+#             total = products.aggregate(total=Sum('buy_price'))['total']
+#             if total is None:
+#                 total = 0
+#             grand_total += total
+#             month_year = inventory.timestamps.strftime("%B %Y")
+#             if month_year not in inventory_data:
+#                 inventory_data[month_year] = {
+#                     'total': total, 'products': products}
+#             else:
+#                 inventory_data[month_year]['total'] += total
+#                 inventory_data[month_year]['products'] |= products
+
+#         context['inventory_data'] = inventory_data
+#         context['grand_total'] = grand_total
+#         return context
+#     def post(self, request, *args, **kwargs):
+#         # If a POST request is received, redirect to the same view with the POST data as GET parameters
+#         start_date = request.POST.get('start_date')
+#         end_date = request.POST.get('end_date')
+#         if start_date and end_date:
+#             return HttpResponseRedirect(reverse('inventory') + f'?start_date={start_date}&end_date={end_date}')
+#         else:
+#             return HttpResponseRedirect(reverse('inventory'))
 
 
 class InventoryView(TemplateView):
@@ -114,13 +173,20 @@ class InventoryView(TemplateView):
             queryset = Inventory.objects.all()
 
         inventory_data = {}
+        grand_total = 0
+
         for inventory in queryset:
             products = Product.objects.filter(inventory=inventory)
+            total = inventory.total
+            if total is None:
+                total = 0
+            grand_total += total
             inventory_data[inventory] = products
 
         product = Product.objects.all()
         context['product'] = product
         context['inventory_data'] = inventory_data
+        context['grand_total'] = grand_total
         return context
 
     def post(self, request, *args, **kwargs):
