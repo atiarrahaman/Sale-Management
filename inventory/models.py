@@ -25,7 +25,7 @@ class Category(models.Model):
 class Inventory(models.Model):
     user=models.ForeignKey(User, on_delete=models.CASCADE)
     total = models.DecimalField(decimal_places=2, max_digits=12, default=0)
-    timestamps = models.DateTimeField(auto_now_add=True, null=True)
+    date = models.DateField(auto_now_add=True,null=True)
 
 
     def __str__(self) -> str:

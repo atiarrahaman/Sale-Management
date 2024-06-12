@@ -33,6 +33,20 @@
         </div>
       </div>
       <div class="col-md-4">
+                <label
+                  for="{{ product_form.unit.id_for_label }}"
+                  class="form-label"
+                  >Unit</label
+                >
+                <div>
+                  {{ product_form.unit }} 
+                  {% if product_form.unit.errors %} 
+                  {% for error in product_form.unit.errors %}
+                  <p class="text-danger">{{ error }}</p>
+                  {% endfor %} {% endif %}
+                </div>
+              </div>
+      <div class="col-md-4">
         <label for="{{ product_form.buy_price.id_for_label }}" class="form-label"
           >Product buy_price</label
         >
