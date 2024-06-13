@@ -1,0 +1,35 @@
+{% extends 'base.html' %} {% load crispy_forms_tags %} {% block title %}
+<title>Update Profile</title>
+{% endblock title %} {% block content %}
+
+<div class="container h-100">
+  <div class="col-md-6 mx-auto badge-info text-center p-2 badge-pill">
+    <h1 class="text-info">Staff Data Update Form</h1>
+  </div>
+  <hr />
+  {% if form.non_field_errors %} {% for er in form.non_field_errors %}
+  <p class="bg-danger text-white p-3">{{er}}</p>
+  {% endfor %} {% endif %}
+  <div class="row shadow-lg p-5 mb-5 rounded-5 col-md-8 mx-auto">
+    <div class="col-md-12">
+      <form class="row g-4" method="POST">
+        {% csrf_token %}
+
+        <div class="col-md-6">{{form.phone|as_crispy_field}}</div>
+        <div class="col-md-4">{{form.education|as_crispy_field}}</div>
+        <div class="col-md-2">{{form.point|as_crispy_field}}</div>
+
+        <div class="col-md-6">{{form.address|as_crispy_field}}</div>
+        <div class="col-md-6">{{form.image|as_crispy_field}}</div>
+
+        <div class="col-md-12 my-3">
+          <div class="d-grid gap-2 col-4 mx-auto d-block">
+            <button class="btn btn-primary" type="submit">Submit</button>
+            <button class="btn btn-primary" type="reset">Reset</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock content %}

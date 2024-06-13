@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block title %}Add Supplier{% endblock %}
+{% load crispy_forms_tags %}
+{% block content %}
+<div class="container">
+  <h1 class="text-center mt-4">Add Supplier Information</h1>
+  <div class="d-flex justify-content-center align-items-center">
+    <div class="col-md-6 shadow-lg mt-5 p-4 rounded-5">
+      <form method="POST">
+        {% csrf_token %}
+        {{ supplier_form|crispy }}
+        <button class="btn btn-primary" type="submit">Submit</button>
+      </form>
+    </div>
+  </div>
+  <div class="mt-5">
+    <h2>Suppliers</h2>
+    <table class="table table-bordered">
+      <thead>
+        <tr>
+          <th>Supplier Name</th>
+          <th>Contact Number</th>
+          <th>Tax Id</th>
+          <th>Contact Address</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for supplier in suppliers %}
+        <tr>
+          <td>{{ supplier.name }}</td>
+          <td>{{ supplier.phone }}</td>
+          <td>{{ supplier.tax_id }}</td>
+          <td>{{ supplier.address }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
