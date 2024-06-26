@@ -5,8 +5,8 @@ from django.contrib.auth.models import User
 # Create your models here.
 
 UNIT =(
+    ("PCS", "PCS"),
     ("KG","KG"),
-    ("PCS","PCS"),
     ("PACKET","PACKET"),
     ("LITTER","LITTER"),
 )
@@ -28,9 +28,9 @@ class Product(models.Model):
         'inventory.Category', on_delete=models.CASCADE, blank=True, null=True)
     serial_key = models.UUIDField(
         default=uuid.uuid4, editable=False, unique=True)
+    bar_code = models.CharField(max_length=50, null=True, blank=True, unique=True)
     qr_image = models.ImageField(upload_to='qr_image', blank=True, null=True)
     image = models.ImageField(upload_to='product_image', blank=True, null=True)
-    is_active = models.BooleanField()
     timestamps = models.DateTimeField(auto_now_add=True, null=True)
 
     def __str__(self):
@@ -45,6 +45,12 @@ class Cart(models.Model):
 
     def __str__(self):
         return "Cart: " + str(self.id)
+
+    def update_cart_total(self):
+        cart_products = self.cartproduct_set.all()
+        total_amount = sum(cp.subtotal for cp in cart_products)
+        self.total = total_amount
+        self.save()
 
 
 class CartProduct(models.Model):

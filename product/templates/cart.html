@@ -11,7 +11,7 @@
             <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
                 {{ form.as_p }}
-                <button type="submit" class="btn btn-primary">Add to Cart</button>
+                <!-- <button type="submit" class="btn btn-primary">Add to Cart</button> -->
             </form>
             <hr>
             <a class="btn btn-primary" href="{% url 'order' %}">Order Now </a>
@@ -35,13 +35,21 @@
                         {% for cart_product in cart_products %}
                         <tr>
                             <td>{{ cart_product.product.name }}</td>
-                            <td>{{ cart_product.product.sell_price }}</td>
-                            <td>{{ cart_product.quantity }}</td>
+                            <td>
+                                <form action="{% url 'manage-cart' cart_product.id %}" method="post" class="update-price-form">
+                                    {% csrf_token %}
+                                    <input type="number" name="price" step="any" value="{{ cart_product.price }}" class="update-price-input">
+                                </form>
+                            </td>
+                            <td>
+                                <form action="{% url 'manage-cart' cart_product.id %}" method="post" class="update-quantity-form">
+                                    {% csrf_token %}
+                                    <input type="number" name="quantity" value="{{ cart_product.quantity }}" min="1" class="update-quantity-input">
+                                </form>
+                            </td>
                             <td>{{ cart_product.subtotal }}</td>
                             <td>
-                                <a href="{% url 'manage-cart' cart_product.id %}?action=inc" class="btn btn-primary">+</a>
-                                <a href="{% url 'manage-cart' cart_product.id %}?action=dcr" class="btn btn-warning">-</a>
-                                <a href="{% url 'manage-cart' cart_product.id %}?action=rmv" class="btn btn-danger">X</a>
+                                <a href="{% url 'manage-cart' cart_product.id %}?action=rmv" class="btn btn-danger">Remove</a>
                             </td>
                         </tr>
                         {% endfor %}
@@ -57,12 +65,15 @@
     </div>
 </div>
 
-
-<!-- Modal -->
-
-
-    </div>
-
-
-
 {% endblock content %}
+
+{% block extrascripts %}
+<script>
+    // JavaScript/jQuery to update cart on input change
+    $(document).ready(function() {
+        $('.update-quantity-input, .update-price-input').change(function() {
+            $(this).closest('form').submit(); // Submit the form on change
+        });
+    });
+</script>
+{% endblock %}
