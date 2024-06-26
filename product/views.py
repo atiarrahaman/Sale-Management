@@ -143,42 +143,63 @@ class OrderView(TemplateView):
             # Return an HttpResponse containing the print-friendly template content
             return HttpResponse(print_template)
 
+        # If form is invalid or if there are errors, render the order.html template again
         context = self.get_context_data()
         context['order_form'] = order_form
         return self.render_to_response(context)
 
-
-
 class ManageCartView(View):
-    def get(self, request, *args, **kwargs):
-
-        cp_id = self.kwargs['cp_id']
-        action = request.GET.get('action')
-        cp_obj = CartProduct.objects.get(id=cp_id)
+    def post(self, request, cp_id):
+        cp_obj = get_object_or_404(CartProduct, id=cp_id)
         cart_obj = cp_obj.cart
 
+        # Update price
+        if 'price' in request.POST:
+            price = float(request.POST['price'])
+            cp_obj.price = price
+            cp_obj.subtotal = price * cp_obj.quantity
+            cp_obj.save()
+            cart_obj.update_cart_total()
+
+        # Update quantity
+        elif 'quantity' in request.POST:
+            quantity = int(request.POST['quantity'])
+            cp_obj.quantity = quantity
+            cp_obj.subtotal = cp_obj.price * quantity
+            cp_obj.save()
+            cart_obj.update_cart_total()
+
+        return redirect('cart')
+
+    def get(self, request, cp_id):
+        cp_obj = get_object_or_404(CartProduct, id=cp_id)
+        cart_obj = cp_obj.cart
+
+        action = request.GET.get('action')
+
+        # Handle increment quantity
         if action == 'inc':
             cp_obj.quantity += 1
             cp_obj.subtotal += cp_obj.price
             cp_obj.save()
-            cart_obj.total += cp_obj.price
-            cart_obj.save()
+            cart_obj.update_cart_total()
+
+        # Handle decrement quantity
         elif action == 'dcr':
             cp_obj.quantity -= 1
             cp_obj.subtotal -= cp_obj.price
             cp_obj.save()
-            cart_obj.total -= cp_obj.price
-            cart_obj.save()
+            cart_obj.update_cart_total()
             if cp_obj.quantity == 0:
                 cp_obj.delete()
+
+        # Handle remove product from cart
         elif action == 'rmv':
             cart_obj.total -= cp_obj.subtotal
             cart_obj.save()
             cp_obj.delete()
-        else:
-            pass
-        return redirect('cart')
 
+        return redirect('cart')
 
 class AllOrderView(TemplateView):
     template_name = 'all_order.html'

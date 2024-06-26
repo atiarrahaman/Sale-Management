@@ -5,6 +5,8 @@ from inventory .models import Category, Supplier
 class ProductForm(forms.ModelForm):
     name = forms.CharField(widget=forms.TextInput(
         attrs={'class': 'form-control'}))
+    bar_code = forms.CharField(widget=forms.TextInput(
+        attrs={'class': 'form-control'}))
     qty = forms.CharField(widget=forms.TextInput(
         attrs={'class': 'form-control'}))
     buy_price = forms.CharField(widget=forms.TextInput(
@@ -17,11 +19,9 @@ class ProductForm(forms.ModelForm):
     ), widget=forms.Select(attrs={'class': 'form-control'}))
     image= forms.FileInput(attrs={'class': 'form-control'}),
     qr_image= forms.FileInput(attrs={'class': 'form-control'}),
-    is_active = forms.BooleanField(widget=forms.CheckboxInput(
-        attrs={'class': 'form-check-input custom-checkbox'}), required=False)
     UNIT_CHOICES = (
-        ("KG","KG"),
         ("PCS","PCS"),
+        ("KG","KG"),
         ("PACKET","PACKET"),
         ("LITTER","LITTER"),
     )
@@ -31,7 +31,7 @@ class ProductForm(forms.ModelForm):
     class Meta:
         model = Product
         fields = ['id','name', 'qty', 'unit', 'buy_price', 'sell_price',
-                  'category', 'supplier', 'image', 'qr_image', 'is_active']
+                  'category', 'supplier', 'image', 'bar_code', 'qr_image']
 
 
 class CartProductForm(forms.ModelForm):

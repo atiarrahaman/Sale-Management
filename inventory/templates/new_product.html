@@ -45,6 +45,17 @@
                     {% endif %}
                     
                     <div class="col-md-4">
+                        <label for="{{ product_form.bar_code.id_for_label }}" class="form-label">Bar Code</label>
+                        <div>
+                            {{ product_form.bar_code }} 
+                            {% if product_form.bar_code.errors %} 
+                                {% for error in product_form.bar_code.errors %}
+                                    <p class="text-danger">{{ error }}</p>
+                                {% endfor %} 
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
                         <label for="{{ product_form.name.id_for_label }}" class="form-label">Product Name</label>
                         <div>
                             {{ product_form.name }} 
@@ -158,17 +169,6 @@
                         {% endif %}
                     </div>
                     
-                    <div class="col-md-4 ml-5">
-                        <label class="form-check-label">
-                            {{ product_form.is_active }} Active
-                        </label>
-                        {% if product_form.is_active.errors %} 
-                            {% for error in product_form.is_active.errors %}
-                                <p class="text-danger">{{ error }}</p>
-                            {% endfor %} 
-                        {% endif %}
-                    </div>
-
                     <div class="col-md-12 my-3">
                         <div class="col-4 mx-auto d-block">
                             <button class="btn btn-primary" type="submit" name="product_submit">Submit</button>

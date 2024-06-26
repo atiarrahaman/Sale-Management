@@ -21,7 +21,8 @@ crispy_forms_tags %} {% block content %}
     <table class="table table-bordered">
                     <thead class="thead-light">
                         <tr>
-                            <th>Product</th>
+                            <th>Bar Code</th>
+                            <th>Product Name</th>
                             <th>Category</th>
                             <th>Supplier Name</th>
                             <th>Quantity</th>
@@ -33,6 +34,7 @@ crispy_forms_tags %} {% block content %}
                     <tbody>
                         {% for product in product %}
                         <tr>
+                            <td>{{ product.bar_code }}</td>
                             <td>{{ product.name }}</td>
                             <td>{{ product.category.name }}</td>
                             <td>{{ product.supplier.name }}</td>
