@@ -190,42 +190,66 @@ class InventoryView(TemplateView):
 
         start_date_str = self.request.GET.get('start_date')
         end_date_str = self.request.GET.get('end_date')
+        product_name = self.request.GET.get('product_name')
+        category_id = self.request.GET.get('category')
+        supplier_id = self.request.GET.get('supplier')
 
+        filters = {}
         if start_date_str and end_date_str:
             start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
             end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
-            queryset = Inventory.objects.filter(
-                timestamps__date__gte=start_date, timestamps__date__lte=end_date)
-        else:
-            queryset = Inventory.objects.all()
+            filters['date__gte'] = start_date
+            filters['date__lte'] = end_date
 
+        queryset = Inventory.objects.filter(**filters)
         inventory_data = {}
         grand_total = 0
 
         for inventory in queryset:
             products = Product.objects.filter(inventory=inventory)
+
+            if product_name:
+                products = products.filter(name__icontains=product_name)
+            if category_id:
+                products = products.filter(category_id=category_id)
+            if supplier_id:
+                products = products.filter(supplier_id=supplier_id)
+
             total = inventory.total
             if total is None:
                 total = 0
             grand_total += total
-            inventory_data[inventory] = products
 
-        product = Product.objects.all()
-        context['product'] = product
+            product_data = []
+            for product in products:
+                subtotal = product.qty * product.buy_price
+                product_data.append({
+                    'product': product,
+                    'subtotal': subtotal,
+                })
+
+            inventory_data[inventory] = product_data
+
+        categories = Category.objects.all()
+        suppliers = Supplier.objects.all()
+
+        context['categories'] = categories
+        context['suppliers'] = suppliers
         context['inventory_data'] = inventory_data
         context['grand_total'] = grand_total
+        context['category_id'] = category_id
+        context['supplier_id'] = supplier_id
         return context
 
     def post(self, request, *args, **kwargs):
         # If a POST request is received, redirect to the same view with the POST data as GET parameters
         start_date = request.POST.get('start_date')
         end_date = request.POST.get('end_date')
-        if start_date and end_date:
-            return HttpResponseRedirect(reverse('inventory') + f'?start_date={start_date}&end_date={end_date}')
-        else:
-            return HttpResponseRedirect(reverse('inventory'))
-
-
+        product_name = request.POST.get('product_name')
+        category_id = request.POST.get('category')
+        supplier_id = request.POST.get('supplier')
+        params = f'?start_date={start_date}&end_date={end_date}&product_name={product_name}&category={category_id}&supplier={supplier_id}'
+        return HttpResponseRedirect(reverse('inventory') + params)
 class ManageInventoryView(View):
     def get(self, request, *args, **kwargs):
 
