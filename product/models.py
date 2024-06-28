@@ -29,7 +29,7 @@ class Product(models.Model):
     serial_key = models.UUIDField(
         default=uuid.uuid4, editable=False, unique=True)
     bar_code = models.CharField(max_length=50, null=True, blank=True, unique=True)
-    qr_image = models.ImageField(upload_to='qr_image', blank=True, null=True)
+
     image = models.ImageField(upload_to='product_image', blank=True, null=True)
     timestamps = models.DateTimeField(auto_now_add=True, null=True)
 

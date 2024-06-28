@@ -18,7 +18,6 @@ class ProductForm(forms.ModelForm):
     supplier = forms.ModelChoiceField(queryset=Supplier.objects.all(
     ), widget=forms.Select(attrs={'class': 'form-control'}))
     image= forms.FileInput(attrs={'class': 'form-control'}),
-    qr_image= forms.FileInput(attrs={'class': 'form-control'}),
     UNIT_CHOICES = (
         ("PCS","PCS"),
         ("KG","KG"),
@@ -31,7 +30,7 @@ class ProductForm(forms.ModelForm):
     class Meta:
         model = Product
         fields = ['id','name', 'qty', 'unit', 'buy_price', 'sell_price',
-                  'category', 'supplier', 'image', 'bar_code', 'qr_image']
+                  'category', 'supplier', 'image', 'bar_code']
 
 
 class CartProductForm(forms.ModelForm):

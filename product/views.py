@@ -17,7 +17,7 @@ from django.template.loader import render_to_string
 from .form import ProductForm
 from datetime import datetime
 from django.http import HttpResponseNotAllowed
-from django.db.models import Sum
+from django.db.models import Sum,Q
 
 class AddProductView(CreateView):
     template_name = 'add_product.html'
@@ -53,22 +53,26 @@ class CartView(TemplateView):
 
         form = CartProductForm(request.POST)
         if form.is_valid():
-            cartproduct = form.save(commit=False)
-            cartproduct.cart = cart_obj
-            cartproduct.quantity = form.cleaned_data['quantity']
-            cartproduct.price = product_obj.sell_price
-            cartproduct.subtotal = product_obj.sell_price * \
-                Decimal(cartproduct.quantity)
-            cartproduct.save()
-            cart_obj.total += cartproduct.subtotal
-            cart_obj.save()
-            messages.success(
-                request, f'{product_obj.name} has been added to cart')
+            quantity = form.cleaned_data['quantity']
+            if int(quantity) > int(product_obj.qty):
+                messages.error(
+                    request, f'Cannot add {quantity} {product_obj.unit} of {product_obj.name} to the cart. Only {product_obj.qty} available.')
+            else:
+                cartproduct = form.save(commit=False)
+                cartproduct.cart = cart_obj
+                cartproduct.quantity = quantity
+                cartproduct.price = product_obj.sell_price
+                cartproduct.subtotal = product_obj.sell_price * \
+                    Decimal(quantity)
+                cartproduct.save()
+                cart_obj.total += cartproduct.subtotal
+                cart_obj.save()
+                messages.success(
+                    request, f'{product_obj.name} has been added to the cart')
         else:
             messages.error(
-                request, 'Failed to add product to cart. Please try again.')
+                request, 'Failed to add product to the cart. Please try again.')
 
-        # Redirect to the cart view after adding a product
         return redirect('cart')
 
     def get_context_data(self, **kwargs):
@@ -87,66 +91,6 @@ class CartView(TemplateView):
         context['cart_total'] = cart_total
         return context
 
-
-class OrderView(TemplateView):
-    template_name = 'order.html'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['order_form'] = OrderForm()
-
-        # Retrieve the order and order products
-        cart_id = self.request.session.get("cart_id")
-        try:
-            cart_obj = Cart.objects.get(id=cart_id)
-            order_products = cart_obj.cartproduct_set.all()
-            cart_total = cart_obj.total
-        except ObjectDoesNotExist:
-            order_products = []
-            cart_total = 0
-
-        context['order_products'] = order_products
-        context['order_total'] = cart_total
-        return context
-
-    def post(self, request, *args, **kwargs):
-        cart_id = request.session.get("cart_id")
-
-        try:
-            cart_obj = Cart.objects.get(id=cart_id)
-        except ObjectDoesNotExist:
-            pass
-
-        order_form = OrderForm(request.POST)
-        if order_form.is_valid():
-            order = order_form.save(commit=False)
-            order.total = cart_obj.total
-            order.save()
-            for cart_product in cart_obj.cartproduct_set.all():
-                OrderProduct.objects.create(
-                    order=order,
-                    product=cart_product.product,
-                    price=cart_product.price,
-                    quantity=cart_product.quantity,
-                    subtotal=cart_product.subtotal
-                )
-            cart_obj.cartproduct_set.all().delete()
-            del request.session['cart_id']
-            messages.success(request, 'Order placed successfully!')
-
-            # Render the print-friendly template
-            print_template = render_to_string('print_order.html', {
-                'order': order,
-                'order_products': order.orderproduct_set.all(),
-                'order_total': order.total
-            })
-            # Return an HttpResponse containing the print-friendly template content
-            return HttpResponse(print_template)
-
-        # If form is invalid or if there are errors, render the order.html template again
-        context = self.get_context_data()
-        context['order_form'] = order_form
-        return self.render_to_response(context)
 
 class ManageCartView(View):
     def post(self, request, cp_id):
@@ -201,6 +145,82 @@ class ManageCartView(View):
 
         return redirect('cart')
 
+
+class OrderView(TemplateView):
+    template_name = 'order.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['order_form'] = OrderForm()
+
+        # Retrieve the order and order products
+        cart_id = self.request.session.get("cart_id")
+        try:
+            cart_obj = Cart.objects.get(id=cart_id)
+            order_products = cart_obj.cartproduct_set.all()
+            cart_total = cart_obj.total
+        except ObjectDoesNotExist:
+            order_products = []
+            cart_total = 0
+
+        context['order_products'] = order_products
+        context['order_total'] = cart_total
+        return context
+
+    def post(self, request, *args, **kwargs):
+        cart_id = request.session.get("cart_id")
+
+        try:
+            cart_obj = Cart.objects.get(id=cart_id)
+        except ObjectDoesNotExist:
+            cart_obj = None
+
+        order_form = OrderForm(request.POST)
+        if order_form.is_valid() and cart_obj:
+            order = order_form.save(commit=False)
+            order.total = cart_obj.total
+            order.save()
+
+            for cart_product in cart_obj.cartproduct_set.all():
+                # Update product quantity
+                product = cart_product.product
+                if product.qty is not None and cart_product.quantity <= product.qty:
+                    product.qty -= cart_product.quantity
+                    product.save()
+
+                    # Create OrderProduct
+                    OrderProduct.objects.create(
+                        order=order,
+                        product=cart_product.product,
+                        price=cart_product.price,
+                        quantity=cart_product.quantity,
+                        subtotal=cart_product.subtotal
+                    )
+                else:
+                    messages.error(
+                        request, f'Not enough stock for {product.name}.')
+                    # Redirect to order page if stock is insufficient
+                    return redirect('order')
+
+            cart_obj.cartproduct_set.all().delete()
+            del request.session['cart_id']
+            messages.success(request, 'Order placed successfully!')
+
+            # Render the print-friendly template
+            print_template = render_to_string('print_order.html', {
+                'order': order,
+                'order_products': order.orderproduct_set.all(),
+                'order_total': order.total
+            })
+            # Return an HttpResponse containing the print-friendly template content
+            return HttpResponse(print_template)
+
+        # If form is invalid or if there are errors, render the order.html template again
+        context = self.get_context_data()
+        context['order_form'] = order_form
+        return self.render_to_response(context)
+
+
 class AllOrderView(TemplateView):
     template_name = 'all_order.html'
 
@@ -218,17 +238,39 @@ class AllOrderView(TemplateView):
     def post(self, request, *args, **kwargs):
         start_date_str = request.POST.get('start_date')
         end_date_str = request.POST.get('end_date')
+        name = request.POST.get('name')
+        phone = request.POST.get('phone')
+        product_name = request.POST.get('product_name')
 
+        filters = Q()
         if start_date_str and end_date_str:
             start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
             end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+            filters &= Q(created_at__date__gte=start_date,
+                         created_at__date__lte=end_date)
 
-            queryset = Order.objects.filter(
-                created_at__date__gte=start_date, created_at__date__lte=end_date)
-            grand_total = queryset.aggregate(total=Sum('total'))['total'] or 0
-            order_data = {order: OrderProduct.objects.filter(
-                order=order) for order in queryset}
-            context = {'order_data': order_data, 'grand_total': grand_total}
-            return render(request, self.template_name, context)
-        else:
-            return HttpResponseNotAllowed(['POST'])
+        if name:
+            filters &= Q(name__icontains=name)
+
+        if phone:
+            filters &= Q(phone__icontains=phone)
+
+        if product_name:
+            order_ids = OrderProduct.objects.filter(
+                product__name__icontains=product_name).values_list('order_id', flat=True)
+            filters &= Q(id__in=order_ids)
+
+        queryset = Order.objects.filter(filters)
+        grand_total = queryset.aggregate(total=Sum('total'))['total'] or 0
+        order_data = {order: OrderProduct.objects.filter(
+            order=order) for order in queryset}
+        context = {
+            'order_data': order_data,
+            'grand_total': grand_total,
+            'start_date': start_date_str,
+            'end_date': end_date_str,
+            'name': name,
+            'phone': phone,
+            'product_name': product_name,
+        }
+        return render(request, self.template_name, context)

@@ -24,12 +24,23 @@ class SupplierView(TemplateView):
     template_name = 'add_supplier.html'
 
     def post(self, request, *args, **kwargs):
-        supplier_form = SupplierForm(request.POST)
+        supplier_id = request.POST.get('supplier_id')
+        if supplier_id:
+            # Editing existing supplier
+            supplier = get_object_or_404(Supplier, pk=supplier_id)
+            supplier_form = SupplierForm(request.POST, instance=supplier)
+        else:
+            # Creating new supplier
+            supplier_form = SupplierForm(request.POST)
+
         if supplier_form.is_valid():
             supplier = supplier_form.save()
-            messages.success(request, f'{supplier.name} has been added/updated as a supplier')
+            messages.success(
+                request, f'{supplier.name} has been added/updated as a supplier')
         else:
-            messages.error(request, 'Failed to add/update supplier. Please try again.')
+            messages.error(
+                request, 'Failed to add/update supplier. Please try again.')
+
         return redirect('add_supplier')
 
     def get_context_data(self, **kwargs):
@@ -37,8 +48,14 @@ class SupplierView(TemplateView):
         context['supplier_form'] = SupplierForm()
         context['suppliers'] = Supplier.objects.all()
         return context
-
-
+    
+class SupplierDeleteView(View):
+    def get(self, request, pk, *args, **kwargs):
+        supplier = get_object_or_404(Supplier, pk=pk)
+        supplier.delete()
+        messages.success(request, f'{supplier.name} has been deleted.')
+        return redirect('add_supplier')
+    
 class CategoryView(TemplateView):
     template_name = 'add_category.html'
 
@@ -137,72 +154,6 @@ class NewProductView(TemplateView):
         context['products'] = Product.objects.all()
         context['product_id'] = kwargs.get('product_id', None)
         return context
-# class NewProductView(TemplateView):
-#     template_name = 'add_new.html'
-
-#     def post(self, request, *args, **kwargs):
-#         if 'supplier_id' in request.POST:
-#             supplier = Supplier.objects.get(id=request.POST['supplier_id'])
-#             supplier_form = SupplierForm(request.POST, instance=supplier)
-#         else:
-#             supplier_form = SupplierForm(request.POST)
-
-#         product_form = ProductForm(request.POST)
-#         category_form = CategoryForm(request.POST)
-
-#         if product_form.is_valid():
-#             # Process product form submission
-#             product = product_form.save(commit=False)
-#             product.subtotal = product.qty * product.buy_price
-#             product.save()
-#             inventory_id = request.session.get("inventory_id")
-#             try:
-#                 inventory_obj = Inventory.objects.get(id=inventory_id)
-#             except Inventory.DoesNotExist:
-#                 inventory_obj = Inventory.objects.create(
-#                     user=request.user, total=0)
-#                 request.session['inventory_id'] = inventory_obj.id
-
-#             product.inventory = inventory_obj
-#             product.save()
-#             inventory_obj.total += product.buy_price * product.qty
-#             inventory_obj.save()
-#             messages.success(
-#                 request, f'{product.name} has been added to inventory')
-#         elif supplier_form.is_valid():
-#             supplier = supplier_form.save()
-#             messages.success(
-#                 request, f'{supplier.name} has been added/updated as a supplier')
-#         elif category_form.is_valid():
-#             category = category_form.save()
-#             messages.success(
-#                 request, f'{category.name} has been added as a category')
-#         else:
-#             messages.error(request, 'Failed to add data. Please try again.')
-#         if 'add_inventory' in request.POST:
-#             del request.session['inventory_id']
-#         return redirect('add_new')
-
-#     def get_context_data(self, **kwargs):
-#         context = super().get_context_data(**kwargs)
-#         inventory_id = self.request.session.get("inventory_id")
-
-#         try:
-#             inventory_obj = Inventory.objects.get(id=inventory_id)
-#             inventory_products = inventory_obj.inventory.all()
-#             inventory_total = inventory_obj.total
-#         except Inventory.DoesNotExist:
-#             inventory_products = []
-#             inventory_total = 0
-
-#         context['product_form'] = ProductForm()
-#         context['supplier_form'] = SupplierForm()
-#         context['category_form'] = CategoryForm()
-#         context['inventory_products'] = inventory_products
-#         context['inventory_total'] = inventory_total
-#         context['suppliers'] = Supplier.objects.all()
-
-#         return context
 
 
 
@@ -230,52 +181,6 @@ class AllProductView(View):
         }
         return render(request, self.template_name, context)
 
-# class InventoryView(TemplateView):
-#     template_name = 'inventory.html'
-
-#     def get_context_data(self, **kwargs):
-#         context = super().get_context_data(**kwargs)
-
-#         start_date_str = self.request.GET.get('start_date')
-#         end_date_str = self.request.GET.get('end_date')
-
-#         if start_date_str and end_date_str:
-#             start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
-#             end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
-#             queryset = Inventory.objects.filter(
-#                 timestamps__date__gte=start_date, timestamps__date__lte=end_date)
-#         else:
-#             queryset = Inventory.objects.all()
-
-#         inventory_data = {}
-#         grand_total = 0
-
-#         for inventory in queryset:
-#             products = Product.objects.filter(inventory=inventory)
-#             total = products.aggregate(total=Sum('buy_price'))['total']
-#             if total is None:
-#                 total = 0
-#             grand_total += total
-#             month_year = inventory.timestamps.strftime("%B %Y")
-#             if month_year not in inventory_data:
-#                 inventory_data[month_year] = {
-#                     'total': total, 'products': products}
-#             else:
-#                 inventory_data[month_year]['total'] += total
-#                 inventory_data[month_year]['products'] |= products
-
-#         context['inventory_data'] = inventory_data
-#         context['grand_total'] = grand_total
-#         return context
-#     def post(self, request, *args, **kwargs):
-#         # If a POST request is received, redirect to the same view with the POST data as GET parameters
-#         start_date = request.POST.get('start_date')
-#         end_date = request.POST.get('end_date')
-#         if start_date and end_date:
-#             return HttpResponseRedirect(reverse('inventory') + f'?start_date={start_date}&end_date={end_date}')
-#         else:
-#             return HttpResponseRedirect(reverse('inventory'))
-
 
 class InventoryView(TemplateView):
     template_name = 'inventory.html'
@@ -285,42 +190,66 @@ class InventoryView(TemplateView):
 
         start_date_str = self.request.GET.get('start_date')
         end_date_str = self.request.GET.get('end_date')
+        product_name = self.request.GET.get('product_name')
+        category_id = self.request.GET.get('category')
+        supplier_id = self.request.GET.get('supplier')
 
+        filters = {}
         if start_date_str and end_date_str:
             start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
             end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
-            queryset = Inventory.objects.filter(
-                timestamps__date__gte=start_date, timestamps__date__lte=end_date)
-        else:
-            queryset = Inventory.objects.all()
+            filters['date__gte'] = start_date
+            filters['date__lte'] = end_date
 
+        queryset = Inventory.objects.filter(**filters)
         inventory_data = {}
         grand_total = 0
 
         for inventory in queryset:
             products = Product.objects.filter(inventory=inventory)
+
+            if product_name:
+                products = products.filter(name__icontains=product_name)
+            if category_id:
+                products = products.filter(category_id=category_id)
+            if supplier_id:
+                products = products.filter(supplier_id=supplier_id)
+
             total = inventory.total
             if total is None:
                 total = 0
             grand_total += total
-            inventory_data[inventory] = products
 
-        product = Product.objects.all()
-        context['product'] = product
+            product_data = []
+            for product in products:
+                subtotal = product.qty * product.buy_price
+                product_data.append({
+                    'product': product,
+                    'subtotal': subtotal,
+                })
+
+            inventory_data[inventory] = product_data
+
+        categories = Category.objects.all()
+        suppliers = Supplier.objects.all()
+
+        context['categories'] = categories
+        context['suppliers'] = suppliers
         context['inventory_data'] = inventory_data
         context['grand_total'] = grand_total
+        context['category_id'] = category_id
+        context['supplier_id'] = supplier_id
         return context
 
     def post(self, request, *args, **kwargs):
         # If a POST request is received, redirect to the same view with the POST data as GET parameters
         start_date = request.POST.get('start_date')
         end_date = request.POST.get('end_date')
-        if start_date and end_date:
-            return HttpResponseRedirect(reverse('inventory') + f'?start_date={start_date}&end_date={end_date}')
-        else:
-            return HttpResponseRedirect(reverse('inventory'))
-
-
+        product_name = request.POST.get('product_name')
+        category_id = request.POST.get('category')
+        supplier_id = request.POST.get('supplier')
+        params = f'?start_date={start_date}&end_date={end_date}&product_name={product_name}&category={category_id}&supplier={supplier_id}'
+        return HttpResponseRedirect(reverse('inventory') + params)
 class ManageInventoryView(View):
     def get(self, request, *args, **kwargs):
 
@@ -337,101 +266,3 @@ class ManageInventoryView(View):
             pass
         return redirect('add_new')
 
-
-# class InventoryView(TemplateView):
-#     template_name = 'inventory.html'
-
-#     def post(self, request, *args, **kwargs):
-#         product_form = ProductForm(request.POST)
-#         supplier_form = SupplierForm(request.POST)
-#         category_form = CategoryForm(request.POST)
-
-#         if product_form.is_valid():
-#             # Process product form submission
-#             product = product_form.save(commit=False)
-#             product.save()
-#             inventory_id = request.session.get("inventory_id")
-#             try:
-#                 inventory_obj = Inventory.objects.get(id=inventory_id)
-#             except Inventory.DoesNotExist:
-#                 inventory_obj = Inventory.objects.create(
-#                     user=request.user, total=0)
-#                 request.session['inventory_id'] = inventory_obj.id
-
-#             product.inventory = inventory_obj
-#             product.save()
-#             inventory_obj.total += product.buy_price * product.qty
-#             inventory_obj.save()
-#             messages.success(
-#                 request, f'{product.name} has been added to inventory')
-#         elif supplier_form.is_valid():
-#             supplier = supplier_form.save()
-#             messages.success(
-#                 request, f'{supplier.name} has been added as a supplier')
-#         elif category_form.is_valid():
-#             category = category_form.save()
-#             messages.success(
-#                 request, f'{category.name} has been added as a category')
-#         else:
-#             messages.error(
-#                 request, 'Failed to add data. Please try again.')
-
-#         start_date_str = request.POST.get('start_date')
-#         end_date_str = request.POST.get('end_date')
-
-#         if 'add_inventory' in request.POST:
-#             del request.session['inventory_id']
-
-#         return self.render_to_response(self.get_context_data(start_date_str=start_date_str, end_date_str=end_date_str))
-
-#     def get_context_data(self, **kwargs):
-#         context = super().get_context_data(**kwargs)
-#         inventory_id = self.request.session.get("inventory_id")
-#         print("Inventory ID:", inventory_id)
-
-#         try:
-#             start_date_str = self.request.POST.get('start_date')
-#             end_date_str = self.request.POST.get('end_date')
-
-#             if start_date_str and end_date_str:
-#                 start_date = datetime.strptime(
-#                     start_date_str, '%Y-%m-%d').date()
-#                 end_date = datetime.strptime(
-#                     end_date_str, '%Y-%m-%d').date()
-
-#                 queryset = Inventory.objects.filter(
-#                     timestamps__date__gte=start_date,
-#                     timestamps__date__lte=end_date
-#                 )
-#             else:
-#                 queryset = Inventory.objects.all()
-
-#             inventory_data = {}
-#             for inventory in queryset:
-#                 products = Product.objects.filter(inventory=inventory)
-#                 inventory_data[inventory] = products
-
-#             inventory_total = sum(
-#                 inventory.total for inventory in queryset
-#             )
-
-#         except Inventory.DoesNotExist:
-#             inventory_total = 0
-#             inventory_data = {}
-#             queryset = Inventory.objects.none()
-
-#         categories = Category.objects.all()
-#         suppliers = Supplier.objects.all()
-#         product = Product.objects.all()
-#         inventories = Inventory.objects.all()
-
-#         context['product_form'] = ProductForm()
-#         context['supplier_form'] = SupplierForm()
-#         context['category_form'] = CategoryForm()
-#         context['inventory_total'] = inventory_total
-#         context['categories'] = categories
-#         context['suppliers'] = suppliers
-#         context['inventories'] = inventories
-#         context['product'] = product
-#         context['inventory_data'] = inventory_data
-#         return context
