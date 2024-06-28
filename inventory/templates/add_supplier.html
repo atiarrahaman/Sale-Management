@@ -3,38 +3,65 @@
 {% load crispy_forms_tags %}
 {% block content %}
 <div class="container">
-  <h1 class="text-center mt-4">Add Supplier Information</h1>
-  <div class="d-flex justify-content-center align-items-center">
-    <div class="col-md-6 shadow-lg mt-5 p-4 rounded-5">
-      <form method="POST">
-        {% csrf_token %}
-        {{ supplier_form|crispy }}
-        <button class="btn btn-primary" type="submit">Submit</button>
-      </form>
+  <div class="row">
+    <div class="col-md-5">
+      <h1 class="text-center mt-2">Supplier Information</h1>
+      <div class="d-flex justify-content-center align-items-center">
+        <div class="col-md-12 shadow-lg mt-2 p-4 rounded-5" id="supplier-form-section">
+          <form method="POST">
+            {% csrf_token %}
+            {{ supplier_form|crispy }}
+            <input type="hidden" name="supplier_id" id="id_supplier_id">
+            <button class="btn btn-primary" type="submit">Submit</button>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-7">
+      <h2 class="text-center mt-4">Suppliers</h2>
+      <table class="table table-bordered">
+        <thead>
+          <tr>
+            <th>Supplier Name</th>
+            <th>Contact Number</th>
+            <th>Tax Id</th>
+            <th>Contact Address</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for supplier in suppliers %}
+          <tr>
+            <td><a href="#" class="edit-supplier" data-id="{{ supplier.id }}" data-name="{{ supplier.name }}" data-phone="{{ supplier.phone }}" data-tax_id="{{ supplier.tax_id }}" data-address="{{ supplier.address }}">{{ supplier.name }}</a></td>
+            <td>{{ supplier.phone }}</td>
+            <td>{{ supplier.tax_id }}</td>
+            <td>{{ supplier.address }}</td>
+            <td>
+              <a href="{% url 'delete_supplier' supplier.id %}" class="delete-supplier">Delete</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
   </div>
-  <div class="mt-5">
-    <h2>Suppliers</h2>
-    <table class="table table-bordered">
-      <thead>
-        <tr>
-          <th>Supplier Name</th>
-          <th>Contact Number</th>
-          <th>Tax Id</th>
-          <th>Contact Address</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for supplier in suppliers %}
-        <tr>
-          <td>{{ supplier.name }}</td>
-          <td>{{ supplier.phone }}</td>
-          <td>{{ supplier.tax_id }}</td>
-          <td>{{ supplier.address }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
 </div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    document.querySelectorAll(".edit-supplier").forEach(function(element) {
+      element.addEventListener("click", function(event) {
+        event.preventDefault();
+        document.getElementById("id_name").value = this.dataset.name;
+        document.getElementById("id_phone").value = this.dataset.phone;
+        document.getElementById("id_tax_id").value = this.dataset.tax_id;
+        document.getElementById("id_address").value = this.dataset.address;
+        document.getElementById("id_supplier_id").value = this.dataset.id;
+
+        // Scroll to the supplier form section
+        document.getElementById("supplier-form-section").scrollIntoView();
+      });
+    });
+  });
+</script>
 {% endblock %}
