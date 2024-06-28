@@ -17,7 +17,7 @@ from django.template.loader import render_to_string
 from .form import ProductForm
 from datetime import datetime
 from django.http import HttpResponseNotAllowed
-from django.db.models import Sum
+from django.db.models import Sum,Q
 
 class AddProductView(CreateView):
     template_name = 'add_product.html'
@@ -220,6 +220,7 @@ class OrderView(TemplateView):
         context['order_form'] = order_form
         return self.render_to_response(context)
 
+
 class AllOrderView(TemplateView):
     template_name = 'all_order.html'
 
@@ -237,17 +238,39 @@ class AllOrderView(TemplateView):
     def post(self, request, *args, **kwargs):
         start_date_str = request.POST.get('start_date')
         end_date_str = request.POST.get('end_date')
+        name = request.POST.get('name')
+        phone = request.POST.get('phone')
+        product_name = request.POST.get('product_name')
 
+        filters = Q()
         if start_date_str and end_date_str:
             start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
             end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+            filters &= Q(created_at__date__gte=start_date,
+                         created_at__date__lte=end_date)
 
-            queryset = Order.objects.filter(
-                created_at__date__gte=start_date, created_at__date__lte=end_date)
-            grand_total = queryset.aggregate(total=Sum('total'))['total'] or 0
-            order_data = {order: OrderProduct.objects.filter(
-                order=order) for order in queryset}
-            context = {'order_data': order_data, 'grand_total': grand_total}
-            return render(request, self.template_name, context)
-        else:
-            return HttpResponseNotAllowed(['POST'])
+        if name:
+            filters &= Q(name__icontains=name)
+
+        if phone:
+            filters &= Q(phone__icontains=phone)
+
+        if product_name:
+            order_ids = OrderProduct.objects.filter(
+                product__name__icontains=product_name).values_list('order_id', flat=True)
+            filters &= Q(id__in=order_ids)
+
+        queryset = Order.objects.filter(filters)
+        grand_total = queryset.aggregate(total=Sum('total'))['total'] or 0
+        order_data = {order: OrderProduct.objects.filter(
+            order=order) for order in queryset}
+        context = {
+            'order_data': order_data,
+            'grand_total': grand_total,
+            'start_date': start_date_str,
+            'end_date': end_date_str,
+            'name': name,
+            'phone': phone,
+            'product_name': product_name,
+        }
+        return render(request, self.template_name, context)
