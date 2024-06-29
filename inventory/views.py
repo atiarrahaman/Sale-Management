@@ -79,6 +79,7 @@ class NewProductView(TemplateView):
 
     def post(self, request, *args, **kwargs):
         if 'search_product' in request.POST:
+            # Search for existing product
             search_value = request.POST.get('search_product')
             product = None
             if search_value:
@@ -96,6 +97,7 @@ class NewProductView(TemplateView):
                 messages.error(request, 'Product not found')
                 return redirect('add_product')
         else:
+            # Adding new product
             product_id = request.POST.get('product_id')
             if product_id:
                 product = Product.objects.get(id=product_id)
@@ -105,24 +107,48 @@ class NewProductView(TemplateView):
                 product_form = ProductForm(request.POST, request.FILES)
 
             if product_form.is_valid():
+                # Save product
                 product = product_form.save(commit=False)
                 product.subtotal = product.qty * product.buy_price
-                product.save()
+                print("hello")
 
-                inventory_id = request.session.get("inventory_id")
-                today = date.today()
-                try:
-                    inventory_obj = Inventory.objects.get(
-                        id=inventory_id, date=today)
-                except Inventory.DoesNotExist:
-                    inventory_obj = Inventory.objects.create(
-                        user=request.user, date=today, total=0)
-                    request.session['inventory_id'] = inventory_obj.id
+                
+                supplier_id = request.POST.get('supplier')
+                if supplier_id:
+                    try:
+                        supplier = Supplier.objects.get(id=supplier_id)
+                        print("hi")
+                        print(supplier)
 
-                product.inventory = inventory_obj
-                product.save()
-                inventory_obj.total += product.buy_price * product.qty
-                inventory_obj.save()
+                        supplier.total_amount += product.subtotal
+                        supplier.unpaid_amount += product.subtotal
+
+                        supplier.save()
+                        
+                    except Supplier.DoesNotExist:
+                        messages.error(request, 'Supplier not found')
+                        return redirect('add_product')
+
+                with transaction.atomic():
+                    product.save()
+
+                    # Handle inventory
+                    inventory_id = request.session.get("inventory_id")
+                    today = date.today()
+                    try:
+                        inventory_obj = Inventory.objects.get(
+                            id=inventory_id, date=today)
+                    except Inventory.DoesNotExist:
+                        inventory_obj = Inventory.objects.create(
+                            user=request.user, date=today, total=0)
+                        request.session['inventory_id'] = inventory_obj.id
+
+                    product.inventory = inventory_obj
+                    product.save()
+
+                    inventory_obj.total += product.buy_price * product.qty
+                    inventory_obj.save()
+
                 messages.success(
                     request, f'{product.name} has been added to inventory')
             else:
@@ -250,6 +276,8 @@ class InventoryView(TemplateView):
         supplier_id = request.POST.get('supplier')
         params = f'?start_date={start_date}&end_date={end_date}&product_name={product_name}&category={category_id}&supplier={supplier_id}'
         return HttpResponseRedirect(reverse('inventory') + params)
+    
+    
 class ManageInventoryView(View):
     def get(self, request, *args, **kwargs):
 

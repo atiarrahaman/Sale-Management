@@ -1,28 +1,48 @@
 from django.db import models
 from inventory.models import Supplier
+from django.contrib.auth.models import User
 # Create your models here.
 
 
-# Exprense
+# Expense
 
-class Exprensive(models.Model):
-    amount=models.DecimalField( max_digits=12, decimal_places=2)
-    supplier = models.ForeignKey(
-        Supplier, on_delete=models.CASCADE, blank=True, null=True)
-    reason= models.CharField(max_length=500)
-    invoice_picture=models.ImageField(upload_to='expensive', blank=True,null=True)
-    timestamps = models.DateTimeField(auto_now_add=True, null=True)
+class Balance(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    amount = models.DecimalField(decimal_places=2, max_digits=12, default=0)
+
+    def __str__(self):
+        return f"Balance of {self.user.username}: {self.amount}"
+
+class Transaction(models.Model):
+    TRANSACTION_TYPES = (
+        ('sale', 'Sale'),
+        ('payment', 'Payment'),
+        ('expense', 'Expense'),
+    )
+
+    transaction_type = models.CharField(max_length=10, choices=TRANSACTION_TYPES)
+    amount = models.DecimalField(decimal_places=2, max_digits=12)
+    balance_after_transaction = models.DecimalField(decimal_places=2, max_digits=12)
+    date = models.DateField(auto_now_add=True)
+    description = models.TextField(null=True, blank=True)
 
 
-class Deposite(models.Model):
-    amount=models.DecimalField( max_digits=12, decimal_places=2)
-    reason= models.CharField(max_length=500)
-    timestamps = models.DateTimeField(auto_now_add=True, null=True)
+class Payment(models.Model):
+    supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE)
+    amount = models.DecimalField(decimal_places=2, max_digits=12)
+    date = models.DateField(auto_now_add=True)
+    invoice = models.CharField(max_length=255, null=True, blank=True)
+    paid = models.BooleanField(default=False)
 
 
-class Withdraw(models.Model):
-    amount=models.DecimalField( max_digits=12, decimal_places=2)
-    reason= models.CharField(max_length=500)
-    timestamps = models.DateTimeField(auto_now_add=True, null=True)
+class Expense(models.Model):
+    EXPENSE_TYPES = (
+        ('salary', 'Salary'),
+        ('rent', 'Rent'),
+        ('other', 'Other'),
+    )
 
-
+    type = models.CharField(max_length=10, choices=EXPENSE_TYPES)
+    amount = models.DecimalField(decimal_places=2, max_digits=12)
+    date = models.DateField(auto_now_add=True)
+    description = models.TextField(null=True, blank=True)

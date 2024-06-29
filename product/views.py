@@ -207,6 +207,7 @@ class OrderView(TemplateView):
             cart_obj.cartproduct_set.all().delete()
             del request.session['cart_id']
             messages.success(request, 'Order placed successfully!')
+            
 
 
             print_template = render_to_string('print_order.html', {

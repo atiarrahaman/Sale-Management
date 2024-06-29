@@ -1,23 +1,17 @@
 from django import forms 
-from .models import Deposite,Exprensive,Withdraw
+from .models import *
+
+from django import forms
+from .models import Payment, Expense
 
 
-
-class ExpensiveForm(forms.ModelForm):
+class PaymentForm(forms.ModelForm):
     class Meta:
-        model=Exprensive
-        fields=['amount','supplier','reason','invoice_picture']
+        model = Payment
+        fields = ['supplier', 'amount', 'invoice']
 
 
-
-class DepositeForm(forms.ModelForm):
+class ExpenseForm(forms.ModelForm):
     class Meta:
-        model=Deposite
-        fields=['amount','reason']
-
-
-
-class WithdrawForm(forms.ModelForm):
-    class Meta:
-        model=Withdraw
-        fields=['amount','reason']
+        model = Expense
+        fields = ['type', 'amount', 'description']

@@ -6,7 +6,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.views import View
 from product.models import Product,Order
-from transaction.models import Exprensive
+from transaction.models import Expense
 from django.utils.decorators import method_decorator
 from django.db.models import Sum
 from datetime import datetime
@@ -105,7 +105,7 @@ class AdminHomeView(View):
     template_name = 'admin_dashboard.html'
 
     def get_queryset(self):
-        queryset = Exprensive.objects.all()
+        queryset = Expense.objects.all()
         self.balance = queryset.aggregate(Sum('amount'))['amount__sum']
         self.total = queryset.aggregate(Sum('amount'))['amount__sum'] or 0
         return queryset
@@ -130,7 +130,7 @@ class AdminHomeView(View):
             start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
             end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
 
-            queryset = Exprensive.objects.filter(
+            queryset = Expense.objects.filter(
                 timestamps__date__gte=start_date,
                 timestamps__date__lte=end_date
             )
