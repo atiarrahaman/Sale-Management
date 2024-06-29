@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="container">
+    <h2 class="text-center my-3">Damaged Products</h2>
+    <table class="table table-bordered bold-table-border">
+      <thead class="thead-dark">
+        <tr>
+          <th>Order</th>
+          <th>Customer</th>
+          <th>Product</th>
+          <th>Quantity</th>
+          <th>Reason</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for damage_product in damage_products %}
+          <tr>
+            <td>{{ damage_product.order_product.order.id }}</td>
+            <td>{{ damage_product.order_product.order.name }}</td>
+            <td>{{ damage_product.order_product.product.name }}</td>
+            <td>{{ damage_product.return_quantity }}</td>
+            <td>{{ damage_product.return_reason }}</td>
+            <td>{{ damage_product.return_date }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

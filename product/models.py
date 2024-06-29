@@ -89,6 +89,7 @@ class ReturnProduct(models.Model):
     order_product = models.ForeignKey(OrderProduct, on_delete=models.CASCADE)
     return_quantity = models.IntegerField()
     return_reason = models.TextField(blank=True)
+    is_damage = models.BooleanField(default=False)
     return_date = models.DateField(auto_now_add=True)
 
     def __str__(self):

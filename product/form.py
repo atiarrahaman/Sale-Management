@@ -52,4 +52,6 @@ class OrderForm(forms.ModelForm):
 class ReturnProductForm(forms.ModelForm):
     class Meta:
         model = ReturnProduct
-        fields = ['order_product', 'return_quantity', 'return_reason']
+        fields = ['order_product', 'return_quantity', 'return_reason',
+'is_damage'
+        ]

@@ -297,16 +297,22 @@ def return_product(request):
             return_product = form.save()
 
             order_product = return_product.order_product
-            order_product.quantity += return_product.return_quantity
-            order_product.save()
+            product = order_product.product
+
+            if return_product.is_damage:
+                # Handle damage product logic (e.g., save to damage product table)
+                messages.success(
+                    request, 'Damaged product recorded successfully.')
+            else:
+                # Increase product quantity by return quantity
+                product.qty += return_product.return_quantity
+                product.save()
 
             messages.success(request, 'Product returned successfully.')
             return redirect('all_order')  # Adjust to your success URL
         else:
             messages.error(
                 request, 'Failed to return product. Please check the form.')
-            print("Form errors:", form.errors)
-            # Return the form with errors to the template
             context = {'form': form}
             return render(request, 'all_order.html', context)
     else:
@@ -314,3 +320,23 @@ def return_product(request):
 
     context = {'form': form}
     return render(request, 'all_order.html', context)
+
+
+class ReturnProductListView(TemplateView):
+    template_name = 'return_product_list.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['return_products'] = ReturnProduct.objects.filter(
+            is_damage=False)
+        return context
+
+
+class DamageProductListView(TemplateView):
+    template_name = 'damage_product_list.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['damage_products'] = ReturnProduct.objects.filter(
+            is_damage=True)
+        return context
