@@ -95,3 +95,4 @@ class ReturnProduct(models.Model):
 
     def __str__(self):
         return f"Return of {self.return_quantity} units of {self.order_product.product.name} from Order #{self.order_product.order.id}"
+

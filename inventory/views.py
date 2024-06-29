@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
-from .models import Inventory, Category, Supplier
+from .models import Inventory, Category, Supplier, ReturnToSupplier
 from django.views.generic import CreateView, TemplateView
 from . forms import CategoryForm, SupplierForm
 from product.models import Product
@@ -266,3 +266,49 @@ class ManageInventoryView(View):
             pass
         return redirect('add_new')
 
+
+class ReturnToSupplierView(View):
+    def post(self, request, *args, **kwargs):
+        product_id = request.POST.get('product_id')
+        supplier_name = request.POST.get('supplier_name')
+        return_quantity = int(request.POST.get('return_quantity'))
+        return_reason = request.POST.get('return_reason')
+        # assuming is_damage is a checkbox
+        is_damage = request.POST.get('is_damage') == 'on'
+
+        product = Product.objects.get(id=product_id)
+        supplier = Supplier.objects.get(name=supplier_name)
+
+        if return_quantity > product.qty:
+            messages.error(
+                request, 'Return quantity cannot be greater than available quantity.')
+        else:
+            # Calculate subtotal
+            subtotal = product.buy_price * return_quantity
+
+            # Create a ReturnToSupplier entry
+            return_to_supplier_product = ReturnToSupplier.objects.create(
+                product=product,
+                supplier=supplier,
+                return_quantity=return_quantity,
+                return_reason=return_reason,
+                is_damage=is_damage
+            )
+
+            # Decrease product quantity
+            product.qty -= return_quantity
+            product.save()
+
+            # Update product subtotal and save
+            product.subtotal = product.qty*product.buy_price
+            product.save()
+
+            # Recalculate total sell price after return
+            total_sell_price = Product.objects.aggregate(
+                total_sell_price=Sum('sell_price'))['total_sell_price'] or 0
+
+            messages.success(
+                request, 'Product returned to supplier successfully.')
+
+        # Redirect to all products view with updated totals or error message
+        return redirect('all_product')
