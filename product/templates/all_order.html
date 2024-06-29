@@ -43,7 +43,7 @@
                 </tr>
             </thead>
             <tbody>
-                {% for order, order_products in order_data.items %}
+                {% for order, order_details in order_data.items %}
                 <tr>
                     <td>{{ order.id }}</td>
                     <td>{{ order.name }}</td>
@@ -58,15 +58,27 @@
                                     <th>Price</th>
                                     <th>Quantity</th>
                                     <th>Subtotal</th>
+                                    <th>Action</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for order_product in order_products %}
+                                {% for order_product in order_details.products %}
                                 <tr>
                                     <td>{{ order_product.product.name }}</td>
                                     <td>{{ order_product.price }}</td>
                                     <td>{{ order_product.quantity }}</td>
                                     <td>{{ order_product.subtotal }}</td>
+                                    <td>
+                                        {% if order_details.returnable %}
+                                            {% if order_product.is_returned %}
+                                                <span class="text-danger">Returned</span>
+                                            {% else %}
+                                                <button type="button" class="btn btn-warning btn-sm return-button" data-toggle="modal" data-target="#returnProductModal" data-order-id="{{ order.id }}" data-order-product-id="{{ order_product.id }}" data-product-name="{{ order_product.product.name }}" data-quantity="{{ order_product.quantity }}" data-price="{{ order_product.price }}">
+                                                    Return
+                                                </button>
+                                            {% endif %}
+                                        {% endif %}
+                                    </td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -78,4 +90,98 @@
         </table>
     </div>
 </div>
+
+<!-- Return Product Modal -->
+<div class="modal fade" id="returnProductModal" tabindex="-1" role="dialog" aria-labelledby="returnProductModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="returnProductModalLabel">Return Product</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form method="post" action="{% url 'return_product' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    {% if form.errors %}
+                    <div class="alert alert-danger">
+                        <ul>
+                            {% for field, errors in form.errors.items %}
+                            {% for error in errors %}
+                            <li>{{ error }}</li>
+                            {% endfor %}
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                    <div class="form-group">
+                        <label for="order_id">Order ID</label>
+                        <input type="text" class="form-control" id="order_id" name="order_id" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="product_name_modal">Product Name</label>
+                        <input type="text" class="form-control" id="product_name_modal" name="product_name" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="return_quantity">Return Quantity</label>
+                        <input type="number" class="form-control" id="return_quantity" name="return_quantity" min="1">
+                    </div>
+                    <div class="form-group">
+                        <label for="price">Price</label>
+                        <input type="text" class="form-control" id="price" name="price" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="return_reason">Return Reason</label>
+                        <input type="textarea" class="form-control" id="return_reason" name="return_reason">
+                    </div>
+                    <div class="form-group">
+                        <label for="is_damage">Is Damaged?</label>
+                        <input type="checkbox" class="form-check-input" id="is_damage" name="is_damage">
+                    </div>
+                    <input type="hidden" id="order_product_id" name="order_product">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var returnButtons = document.querySelectorAll('.return-button');
+    var returnProductModal = document.getElementById('returnProductModal');
+    var orderIdInput = document.getElementById('order_id');
+    var productNameInput = document.getElementById('product_name_modal');  // Updated ID
+    var returnQuantityInput = document.getElementById('return_quantity');
+    var priceInput = document.getElementById('price');
+    var orderProductIdInput = document.getElementById('order_product_id');
+
+    returnButtons.forEach(function(button) {
+        button.addEventListener('click', function() {
+            var orderId = button.getAttribute('data-order-id');
+            var orderProductId = button.getAttribute('data-order-product-id');
+            var productName = button.getAttribute('data-product-name');
+            var quantity = button.getAttribute('data-quantity');
+            var price = button.getAttribute('data-price');
+
+            console.log("Order ID: " + orderId);
+            console.log("Order Product ID: " + orderProductId);
+            console.log("Product Name: " + productName);
+            console.log("Quantity: " + quantity);
+            console.log("Price: " + price);
+
+            orderIdInput.value = orderId;
+            productNameInput.value = productName;
+            returnQuantityInput.value = quantity;
+            priceInput.value = price;
+            orderProductIdInput.value = orderProductId;
+        });
+    });
+});
+</script>
 {% endblock content %}

@@ -1,51 +1,34 @@
-{% extends 'base.html' %}
-{% block title %}Inventory{% endblock %}
-{% load crispy_forms_tags %}
+{% extends "base.html" %}
 {% block content %}
 <div class="container">
-
-  <div id="productData" class="mt-5">
-    <div class=" my-3  ">
-        <form action="" class="col-md-12 mb-2 card card-body ">
-            <div class="text-center">
-                {{myfilter.form}}
-                <button type="submit" class="btn btn-primary badge-pill">Search</button>
-
-            </div>
-        </form>
-    </div>
-    <div class="mb-3 bg-secondary py-2 d-flex justify-content-around text-white" >
-        <h3 >Total Buy : $ {{total_buy_price}}</h3>
-    <h3>Total Sell: $ {{total_sell_price}}</h3>
-    <h3>Approximate Interest: $ {{ interest }}</h3>
+    <h1 class="text-center my-3">Damaged Products</h1>
+    <div class="mb-3 bg-secondary py-2 d-flex justify-content-around text-white">
+        <h3>Total Damage Quantity: {{ total_damage_quantity }}</h3>
+        <h3>Total Damage Price: {{ total_damage_price }}</h3>
     </div>
     <table class="table table-bordered">
-        <thead class="thead-light">
+        <thead class="thead-dark">
             <tr>
-                <th>Bar Code</th>
-                <th>Product Name</th>
-                <th>Category</th>
-                <th>Supplier Name</th>
+                <th>Date</th>
+                <th>Order</th>
+                <th>Customer</th>
+                <th>Product</th>
                 <th>Quantity</th>
-                <th>Buy Price</th>
-                <th>Sell Price</th>
-                <th>Subtotal</th>
+                <th>Reason</th>
                 <th>Action</th>
             </tr>
         </thead>
         <tbody>
-            {% for product in product %}
+            {% for damage_product in damage_products %}
             <tr>
-                <td>{{ product.bar_code }}</td>
-                <td>{{ product.name }}</td>
-                <td>{{ product.category.name }}</td>
-                <td>{{ product.supplier.name }}</td>
-                <td {% if product.qty < 10 %}style="color: red;"{% endif %}>{{ product.qty }} {{product.unit}}</td>
-                <td>{{ product.buy_price }}</td>
-                <td>{{ product.sell_price }}</td>
-                <td>{{ product.subtotal}}</td>
+                <td>{{ damage_product.return_date }}</td>
+                <td>{{ damage_product.order_product.order.id }}</td>
+                <td>{{ damage_product.order_product.order.name }}</td>
+                <td>{{ damage_product.order_product.product.name }}</td>
+                <td>{{ damage_product.return_quantity }}</td>
+                <td>{{ damage_product.return_reason }}</td>
                 <td>
-                    <button type="button" class="btn btn-warning btn-sm return-to-supplier-button" data-toggle="modal" data-target="#returnToSupplierModal" data-product-id="{{ product.id }}" data-product-name="{{ product.name }}" data-supplier-name="{{ product.supplier.name }}">
+                    <button type="button" class="btn btn-warning btn-sm return-to-supplier-button" data-toggle="modal" data-target="#returnToSupplierModal" data-product-id="{{ damage_product.order_product.product.id }}" data-product-name="{{ damage_product.order_product.product.name }}"data-product-quantity="{{ damage_product.return_quantity }}" data-supplier-name="{{ damage_product.order_product.product.supplier.name }}">
                         Return to Supplier
                     </button>
                 </td>
@@ -53,8 +36,6 @@
             {% endfor %}
         </tbody>
     </table>
-  </div>
-
 </div>
 
 <!-- Return to Supplier Modal -->
@@ -107,7 +88,7 @@ document.addEventListener('DOMContentLoaded', function() {
     var returnToSupplierModal = document.getElementById('returnToSupplierModal');
     var productNameInput = document.getElementById('product_name_modal');
     var supplierNameInput = document.getElementById('supplier_name_modal');
-    var returnQuantityInput = document.getElementById('return_quantity');
+    var productQuantityInput = document.getElementById('return_quantity');
     var productIdInput = document.getElementById('product_id');
 
     returnToSupplierButtons.forEach(function(button) {
@@ -115,12 +96,14 @@ document.addEventListener('DOMContentLoaded', function() {
             var productId = button.getAttribute('data-product-id');
             var productName = button.getAttribute('data-product-name');
             var supplierName = button.getAttribute('data-supplier-name');
+            var productQuantity = button.getAttribute('data-product-quantity');
 
             productNameInput.value = productName;
             supplierNameInput.value = supplierName;
             productIdInput.value = productId;
+            productQuantityInput.value = productQuantity;
         });
     });
 });
 </script>
-{% endblock content %}
+{% endblock %}

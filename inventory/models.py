@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils.text import slugify
+from product.models import Product
 
 class Supplier(models.Model):
     name = models.CharField(max_length=150)
@@ -30,3 +31,18 @@ class Inventory(models.Model):
 
     def __str__(self) -> str:
         return "Inventory: " + str(self.id) + "To: " + str(self.total)
+
+
+class ReturnToSupplier(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE)
+    return_quantity = models.IntegerField()
+    return_reason = models.TextField(blank=True)
+    return_date = models.DateField(auto_now_add=True)
+    is_damage = models.BooleanField(default=False)
+
+    def subtotal(self):
+        return self.return_quantity * self.product.buy_price
+
+    def __str__(self):
+        return f"Return of {self.return_quantity} units of {self.product.name} to Supplier #{self.supplier.name}"

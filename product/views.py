@@ -6,7 +6,7 @@ from django.views.generic import CreateView, UpdateView, DetailView, DeleteView
 from django.views import View
 from django.urls import reverse_lazy
 from django.shortcuts import render, redirect
-from .models import Cart, CartProduct, Order,OrderProduct
+from .models import Cart, CartProduct, Order, OrderProduct, ReturnProduct
 from django.views.generic import View, ListView, TemplateView
 from django.contrib import messages
 from .form import CartProductForm, OrderForm
@@ -14,10 +14,12 @@ from decimal import Decimal
 from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
-from .form import ProductForm
+from .form import ProductForm, ReturnProductForm
 from datetime import datetime
 from django.http import HttpResponseNotAllowed
-from django.db.models import Sum,Q
+from django.db.models import Sum,Q, F, FloatField
+from datetime import timedelta
+from django.utils import timezone
 
 class AddProductView(CreateView):
     template_name = 'add_product.html'
@@ -206,16 +208,15 @@ class OrderView(TemplateView):
             del request.session['cart_id']
             messages.success(request, 'Order placed successfully!')
 
-            # Render the print-friendly template
+
             print_template = render_to_string('print_order.html', {
                 'order': order,
                 'order_products': order.orderproduct_set.all(),
                 'order_total': order.total
             })
-            # Return an HttpResponse containing the print-friendly template content
+
             return HttpResponse(print_template)
 
-        # If form is invalid or if there are errors, render the order.html template again
         context = self.get_context_data()
         context['order_form'] = order_form
         return self.render_to_response(context)
@@ -229,8 +230,14 @@ class AllOrderView(TemplateView):
         queryset = Order.objects.all()
         grand_total = queryset.aggregate(total=Sum('total'))['total'] or 0
 
-        order_data = {order: OrderProduct.objects.filter(
-            order=order) for order in queryset}
+        now = timezone.now().date()
+        order_data = {
+            order: {
+                'products': OrderProduct.objects.filter(order=order),
+                'returnable': (now - order.created_at.date()).days <= 7
+            } for order in queryset
+        }
+
         context['order_data'] = order_data
         context['grand_total'] = grand_total
         return context
@@ -262,8 +269,15 @@ class AllOrderView(TemplateView):
 
         queryset = Order.objects.filter(filters)
         grand_total = queryset.aggregate(total=Sum('total'))['total'] or 0
-        order_data = {order: OrderProduct.objects.filter(
-            order=order) for order in queryset}
+
+        now = timezone.now().date()
+        order_data = {
+            order: {
+                'products': OrderProduct.objects.filter(order=order),
+                'returnable': (now - order.created_at.date()).days <= 7
+            } for order in queryset
+        }
+
         context = {
             'order_data': order_data,
             'grand_total': grand_total,
@@ -274,3 +288,79 @@ class AllOrderView(TemplateView):
             'product_name': product_name,
         }
         return render(request, self.template_name, context)
+
+
+def return_product(request):
+    if request.method == 'POST':
+        form = ReturnProductForm(request.POST)
+        if form.is_valid():
+            return_product = form.save()
+
+            order_product = return_product.order_product
+            product = order_product.product
+
+            # Set the is_returned field to True
+            order_product.is_returned = True
+            order_product.save()
+
+            if return_product.is_damage:
+                # Handle damaged product logic (e.g., save to damage product table)
+                messages.success(
+                    request, 'Damaged product recorded successfully.')
+            else:
+                # Increase product quantity by return quantity
+                product.qty += return_product.return_quantity
+                product.save()
+
+            messages.success(request, 'Product returned successfully.')
+            return redirect('all_order')  # Adjust to your success URL
+        else:
+            messages.error(
+                request, 'Failed to return product. Please check the form.')
+            context = {'form': form}
+            return render(request, 'all_order.html', context)
+    else:
+        form = ReturnProductForm()
+
+    context = {'form': form}
+    return render(request, 'all_order.html', context)
+
+class ReturnProductListView(TemplateView):
+    template_name = 'return_product_list.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return_products = ReturnProduct.objects.filter(
+            is_damage=False).order_by("-id")
+
+        total_return_quantity = return_products.aggregate(
+            total_quantity=Sum('return_quantity'))['total_quantity'] or 0
+        total_return_price = return_products.aggregate(
+            total_price=Sum(F('return_quantity') *
+                            F('order_product__price'), output_field=FloatField())
+        )['total_price'] or 0
+
+        context['return_products'] = return_products
+        context['total_return_quantity'] = total_return_quantity
+        context['total_return_price'] = total_return_price
+        return context
+
+
+class DamageProductListView(TemplateView):
+    template_name = 'damage_product_list.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        damage_products = ReturnProduct.objects.filter(is_damage=True).order_by("-id")
+
+        total_damage_quantity = damage_products.aggregate(
+            total_quantity=Sum('return_quantity'))['total_quantity'] or 0
+        total_damage_price = damage_products.aggregate(
+            total_price=Sum(F('return_quantity') *
+                            F('order_product__price'), output_field=FloatField())
+        )['total_price'] or 0
+
+        context['damage_products'] = damage_products
+        context['total_damage_quantity'] = total_damage_quantity
+        context['total_damage_price'] = total_damage_price
+        return context

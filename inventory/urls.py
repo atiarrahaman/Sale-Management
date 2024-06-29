@@ -11,5 +11,8 @@ urlpatterns = [
          views.SupplierDeleteView.as_view(), name='delete_supplier'),
     path('manage-inventory/<int:pro_id>',
          views.ManageInventoryView.as_view(), name='manage-inventory'),
-
+    path('return-to-supplier/', views.ReturnToSupplierView.as_view(),
+         name='return_to_supplier'),
+    path('return-supplier-products/', views.ReturnToSupplierProductListView.as_view(),
+         name='return-supplier-products'),
 ]

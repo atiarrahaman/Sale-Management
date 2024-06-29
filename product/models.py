@@ -80,6 +80,22 @@ class OrderProduct(models.Model):
     price = models.PositiveIntegerField()
     quantity = models.PositiveIntegerField()
     subtotal = models.PositiveIntegerField()
+    is_returned = models.BooleanField(default=False)
 
     def __str__(self):
         return "Order: " + str(self.order.id) + "OrderProduct: " + str(self.id)
+
+
+class ReturnProduct(models.Model):
+    order_product = models.ForeignKey(OrderProduct, on_delete=models.CASCADE)
+    return_quantity = models.IntegerField()
+    return_reason = models.TextField(blank=True)
+    is_damage = models.BooleanField(default=False)
+    return_date = models.DateField(auto_now_add=True)
+
+    def subtotal(self):
+        return self.return_quantity * self.order_product.product.sell_price
+
+    def __str__(self):
+        return f"Return of {self.return_quantity} units of {self.order_product.product.name} from Order #{self.order_product.order.id}"
+
