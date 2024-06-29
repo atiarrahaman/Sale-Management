@@ -83,3 +83,13 @@ class OrderProduct(models.Model):
 
     def __str__(self):
         return "Order: " + str(self.order.id) + "OrderProduct: " + str(self.id)
+
+
+class ReturnProduct(models.Model):
+    order_product = models.ForeignKey(OrderProduct, on_delete=models.CASCADE)
+    return_quantity = models.IntegerField()
+    return_reason = models.TextField(blank=True)
+    return_date = models.DateField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Return of {self.return_quantity} units of {self.order_product.product.name} from Order #{self.order_product.order.id}"
