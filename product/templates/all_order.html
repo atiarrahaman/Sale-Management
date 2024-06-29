@@ -70,9 +70,13 @@
                                     <td>{{ order_product.subtotal }}</td>
                                     <td>
                                         {% if order_details.returnable %}
-                                        <button type="button" class="btn btn-warning btn-sm return-button" data-toggle="modal" data-target="#returnProductModal" data-order-id="{{ order.id }}" data-order-product-id="{{ order_product.id }}" data-product-name="{{ order_product.product.name }}" data-quantity="{{ order_product.quantity }}" data-price="{{ order_product.price }}">
-                                            Return
-                                        </button>
+                                            {% if order_product.is_returned %}
+                                                <span class="text-danger">Returned</span>
+                                            {% else %}
+                                                <button type="button" class="btn btn-warning btn-sm return-button" data-toggle="modal" data-target="#returnProductModal" data-order-id="{{ order.id }}" data-order-product-id="{{ order_product.id }}" data-product-name="{{ order_product.product.name }}" data-quantity="{{ order_product.quantity }}" data-price="{{ order_product.price }}">
+                                                    Return
+                                                </button>
+                                            {% endif %}
                                         {% endif %}
                                     </td>
                                 </tr>

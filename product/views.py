@@ -17,7 +17,7 @@ from django.template.loader import render_to_string
 from .form import ProductForm, ReturnProductForm
 from datetime import datetime
 from django.http import HttpResponseNotAllowed
-from django.db.models import Sum,Q
+from django.db.models import Sum,Q, F, FloatField
 from datetime import timedelta
 from django.utils import timezone
 
@@ -299,8 +299,12 @@ def return_product(request):
             order_product = return_product.order_product
             product = order_product.product
 
+            # Set the is_returned field to True
+            order_product.is_returned = True
+            order_product.save()
+
             if return_product.is_damage:
-                # Handle damage product logic (e.g., save to damage product table)
+                # Handle damaged product logic (e.g., save to damage product table)
                 messages.success(
                     request, 'Damaged product recorded successfully.')
             else:
@@ -321,14 +325,18 @@ def return_product(request):
     context = {'form': form}
     return render(request, 'all_order.html', context)
 
-
 class ReturnProductListView(TemplateView):
     template_name = 'return_product_list.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['return_products'] = ReturnProduct.objects.filter(
-            is_damage=False)
+        return_products = ReturnProduct.objects.filter(is_damage=False).annotate(
+            subtotal=F('return_quantity') * F('order_product__price')
+        )
+        grand_total = return_products.aggregate(
+            total=Sum('subtotal'))['total'] or 0
+        context['return_products'] = return_products
+        context['grand_total'] = grand_total
         return context
 
 
@@ -337,6 +345,11 @@ class DamageProductListView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['damage_products'] = ReturnProduct.objects.filter(
-            is_damage=True)
+        damage_products = ReturnProduct.objects.filter(is_damage=True).annotate(
+            subtotal=F('return_quantity') * F('order_product__price')
+        )
+        grand_total = damage_products.aggregate(
+            total=Sum('subtotal'))['total'] or 0
+        context['damage_products'] = damage_products
+        context['grand_total'] = grand_total
         return context

@@ -80,6 +80,7 @@ class OrderProduct(models.Model):
     price = models.PositiveIntegerField()
     quantity = models.PositiveIntegerField()
     subtotal = models.PositiveIntegerField()
+    is_returned = models.BooleanField(default=False)
 
     def __str__(self):
         return "Order: " + str(self.order.id) + "OrderProduct: " + str(self.id)
