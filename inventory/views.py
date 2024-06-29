@@ -14,7 +14,7 @@ from django.views import View
 from .filters import ProductFilter
 from django.http import HttpResponseRedirect
 from django.urls import reverse
-from django.db.models import Sum
+from django.db.models import Sum, F, FloatField
 from django.db.models.functions import TruncMonth
 from datetime import date
 # Create your views here.
@@ -312,3 +312,31 @@ class ReturnToSupplierView(View):
 
         # Redirect to all products view with updated totals or error message
         return redirect('all_product')
+
+
+class ReturnToSupplierProductListView(TemplateView):
+    template_name = 'return_to_supplier.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        return_products = ReturnToSupplier.objects.all()
+
+        # Calculate total return quantity
+        total_return_quantity = return_products.aggregate(
+            total_quantity=Sum('return_quantity')
+        )['total_quantity'] or 0
+
+        # Calculate total return price
+        total_return_price = return_products.aggregate(
+            total_price=Sum(
+                F('return_quantity') * F('product__buy_price'),
+                output_field=FloatField()
+            )
+        )['total_price'] or 0
+
+        context['return_products'] = return_products
+        context['total_return_quantity'] = total_return_quantity
+        context['total_return_price'] = total_return_price
+
+        return context

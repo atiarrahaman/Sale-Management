@@ -41,5 +41,8 @@ class ReturnToSupplier(models.Model):
     return_date = models.DateField(auto_now_add=True)
     is_damage = models.BooleanField(default=False)
 
+    def subtotal(self):
+        return self.return_quantity * self.product.buy_price
+
     def __str__(self):
         return f"Return of {self.return_quantity} units of {self.product.name} to Supplier #{self.supplier.name}"

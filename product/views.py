@@ -330,13 +330,19 @@ class ReturnProductListView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        return_products = ReturnProduct.objects.filter(is_damage=False).annotate(
-            subtotal=F('return_quantity') * F('order_product__price')
-        )
-        grand_total = return_products.aggregate(
-            total=Sum('subtotal'))['total'] or 0
+        return_products = ReturnProduct.objects.filter(
+            is_damage=False).order_by("-id")
+
+        total_return_quantity = return_products.aggregate(
+            total_quantity=Sum('return_quantity'))['total_quantity'] or 0
+        total_return_price = return_products.aggregate(
+            total_price=Sum(F('return_quantity') *
+                            F('order_product__price'), output_field=FloatField())
+        )['total_price'] or 0
+
         context['return_products'] = return_products
-        context['grand_total'] = grand_total
+        context['total_return_quantity'] = total_return_quantity
+        context['total_return_price'] = total_return_price
         return context
 
 
@@ -345,11 +351,16 @@ class DamageProductListView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        damage_products = ReturnProduct.objects.filter(is_damage=True).annotate(
-            subtotal=F('return_quantity') * F('order_product__price')
-        )
-        grand_total = damage_products.aggregate(
-            total=Sum('subtotal'))['total'] or 0
+        damage_products = ReturnProduct.objects.filter(is_damage=True).order_by("-id")
+
+        total_damage_quantity = damage_products.aggregate(
+            total_quantity=Sum('return_quantity'))['total_quantity'] or 0
+        total_damage_price = damage_products.aggregate(
+            total_price=Sum(F('return_quantity') *
+                            F('order_product__price'), output_field=FloatField())
+        )['total_price'] or 0
+
         context['damage_products'] = damage_products
-        context['grand_total'] = grand_total
+        context['total_damage_quantity'] = total_damage_quantity
+        context['total_damage_price'] = total_damage_price
         return context

@@ -93,6 +93,9 @@ class ReturnProduct(models.Model):
     is_damage = models.BooleanField(default=False)
     return_date = models.DateField(auto_now_add=True)
 
+    def subtotal(self):
+        return self.return_quantity * self.order_product.product.sell_price
+
     def __str__(self):
         return f"Return of {self.return_quantity} units of {self.order_product.product.name} from Order #{self.order_product.order.id}"
 
