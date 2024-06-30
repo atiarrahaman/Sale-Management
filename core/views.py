@@ -16,7 +16,8 @@ from .models import Staff
 from .filters import StaffFilter
 from django.contrib.auth.models import User
 from django.contrib.auth.views import PasswordChangeView
-
+from product.models import Product, Order, OrderProduct
+from transaction.models import Transaction, Payment, Expense
 
 class StaffCreateView(View):
     form_class = StaffCreationForm
@@ -101,51 +102,35 @@ class CustomPasswordChangeView(PasswordChangeView):
     template_name = 'change_password.html'
     success_url = reverse_lazy('password_change_done') 
 
+
 class AdminHomeView(View):
     template_name = 'admin_dashboard.html'
 
-    def get_queryset(self):
-        queryset = Expense.objects.all()
-        self.balance = queryset.aggregate(Sum('amount'))['amount__sum']
-        self.total = queryset.aggregate(Sum('amount'))['amount__sum'] or 0
-        return queryset
+    def get(self, request):
+        # Fetch data from models
+        products = Product.objects.all()
+        orders = Order.objects.all()
+        orderProduct = OrderProduct.objects.all()
+        transactions = Transaction.objects.all()
 
-    def get(self, request, *args, **kwargs):
-        product = Product.objects.all()
-        order=Order.objects.all()
+        # Data processing for charts
+        product_count = products.count()
+        total_buy_price = sum(product.buy_price for product in products)
+        total_sell_price = sum(product.sell_price for product in products)
+        total_order_price = sum(order.total for order in orders)
+        # total_order_price = sum(orderProduct.price for order in orders)
+        total_transactions = transactions.count()
+
         context = {
-            'object_list': self.get_queryset(),
-            'balance': self.balance,
-            'total': self.total,
-            'product': product,
-            'order': order,
+            'product_count': product_count,
+            'total_buy_price': total_buy_price,
+            'total_sell_price': total_sell_price,
+            'total_order_price': total_order_price,
+            'total_transactions': total_transactions,
+            'transactions': transactions
         }
+
         return render(request, self.template_name, context)
-
-    def post(self, request, *args, **kwargs):
-        start_date_str = request.POST.get('start_date')
-        end_date_str = request.POST.get('end_date')
-
-        if start_date_str and end_date_str:
-            start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
-            end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
-
-            queryset = Expense.objects.filter(
-                timestamps__date__gte=start_date,
-                timestamps__date__lte=end_date
-            )
-            self.balance = queryset.aggregate(Sum('amount'))['amount__sum']
-            self.total = queryset.aggregate(Sum('amount'))['amount__sum'] or 0
-
-            context = {
-                'object_list': queryset,
-                'balance': self.balance,
-                'total': self.total,
-            }
-
-            return render(request, self.template_name, context)
-
-        return redirect('admin_dashboard')
 
 
 @login_required
