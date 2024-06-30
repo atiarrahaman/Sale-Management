@@ -10,7 +10,7 @@
     <div>
 
     <div class="chart-select">
-        <label for="chartType">Select Chart Type:</label>
+        <label for="chartType">Chart Type:</label>
         <select id="chartType" onchange="updateChart()">
             <option value="waterfall">Waterfall Chart</option>
             <option value="bar">Bar Chart</option>
@@ -35,10 +35,9 @@
             // Fetch data from Django context (this can be dynamic data from the backend)
             var data = {
                 product_count: {{ product_count }},
-                total_buy_price: {{ total_buy_price }},
-                total_sell_price: {{ total_sell_price }},
-                total_order_price: {{ total_order_price }},
-                total_transactions: {{ total_transactions }}
+                order_count: {{ order_count }},
+                orderProduct_count: {{ orderProduct_count }},
+                transaction_count: {{ transaction_count }}
             };
 
             // Define chart data and layout based on selected chart type
@@ -47,8 +46,8 @@
             if (chartType === 'waterfall') {
                 chartData = [{
                     type: 'waterfall',
-                    x: ['Product Buy Price', 'Product Sell Price', 'Order Price'],
-                    y: [data.total_buy_price, data.total_sell_price, data.total_order_price],
+                    x: ['Products', 'Orders', 'Order Products', 'Transactions'],
+                    y: [data.product_count, data.order_count, data.orderProduct_count, data.transaction_count],
                     decreasing: {marker: {color: 'Maroon', line: {color: 'red', width: 2}}},
                     increasing: {marker: {color: 'Teal'}},
                     totals: {marker: {color: 'DeepSkyBlue', line: {color: 'blue', width: 3}}}
@@ -56,23 +55,23 @@
                 layout = { title: 'Waterfall Chart' };
             } else if (chartType === 'bar') {
                 chartData = [{
-                    x: ['Products', 'Orders', 'Transactions'],
-                    y: [data.product_count, data.total_order_price, data.total_transactions],
+                    x: ['Products', 'Orders', 'Order Products', 'Transactions'],
+                    y: [data.product_count, data.order_count, data.orderProduct_count, data.transaction_count],
                     type: 'bar'
                 }];
                 layout = { title: 'Bar Chart' };
             } else if (chartType === 'pie') {
                 chartData = [{
-                    labels: ['Products', 'Orders', 'Transactions'],
-                    values: [data.product_count, data.total_order_price, data.total_transactions],
+                    labels: ['Products', 'Orders', 'Order Products', 'Transactions'],
+                    values: [data.product_count, data.order_count, data.orderProduct_count, data.transaction_count],
                     type: 'pie'
                 }];
                 layout = { title: 'Pie Chart' };
             } else if (chartType === 'gantt') {
                 chartData = [{
                     type: 'bar',
-                    x: [data.total_buy_price, data.total_sell_price, data.total_order_price],
-                    y: ['Buy Price', 'Sell Price', 'Order Price'],
+                    x: [data.product_count, data.order_count, data.orderProduct_count, data.transaction_count],
+                    y: ['Products', 'Orders', 'Order Products', 'Transactions'],
                     orientation: 'h'
                 }];
                 layout = { title: 'Gantt Chart' };
@@ -84,20 +83,20 @@
                         pad: 15,
                         thickness: 30,
                         line: {color: 'black', width: 0.5},
-                        label: ['Products', 'Orders', 'Transactions']
+                        label: ['Products', 'Orders', 'Order Products', 'Transactions']
                     },
                     link: {
-                        source: [0, 1, 0],
-                        target: [1, 2, 2],
-                        value: [data.product_count, data.total_order_price, data.total_transactions]
+                        source: [0, 0, 1, 2],
+                        target: [1, 2, 2, 3],
+                        value: [data.product_count, data.order_count, data.orderProduct_count, data.transaction_count]
                     }
                 }];
                 layout = { title: 'Flowchart' };
             } else if (chartType === 'radar') {
                 chartData = [{
                     type: 'scatterpolar',
-                    r: [data.product_count, data.total_order_price, data.total_transactions],
-                    theta: ['Products', 'Orders', 'Transactions'],
+                    r: [data.product_count, data.order_count, data.orderProduct_count, data.transaction_count],
+                    theta: ['Products', 'Orders', 'Order Products', 'Transactions'],
                     fill: 'toself'
                 }];
                 layout = { title: 'Radar Chart' };
@@ -111,30 +110,6 @@
         updateChart();
     </script>
 </div>
-
-<h2>Transactions History</h2>
-<table class="table">
-    <thead>
-        <tr>
-            <th>Date</th>
-            <th>Type</th>
-            <th>Amount</th>
-            <th>Balance After</th>
-            <th>Description</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for transaction in transactions %}
-        <tr>
-            <td>{{ transaction.date }}</td>
-            <td>{{ transaction.get_transaction_type_display }}</td>
-            <td>{{ transaction.amount }}</td>
-            <td>{{ transaction.balance_after_transaction }}</td>
-            <td>{{ transaction.description }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
 
 </div>
 {% else %}

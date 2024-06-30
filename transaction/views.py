@@ -127,8 +127,66 @@ class TransactionView(TemplateView):
         return self.render_to_response(self.get_context_data())
 
 
+# class TransactionHistoryView(View):
+#     template_name = 'transaction_history.html'
+
+#     def get(self, request):
+#         # Fetch and filter data based on request parameters
+#         transaction_type = request.GET.get('transaction_type', '')
+#         supplier_name = request.GET.get('supplier_name', '')
+#         amount = request.GET.get('amount', '')
+#         start_date_str = request.GET.get('start_date', '')
+#         end_date_str = request.GET.get('end_date', '')
+
+#         filters = Q()
+#         if transaction_type:
+#             filters &= Q(transaction_type=transaction_type)
+#         if amount:
+#             filters &= Q(amount=amount)
+#         if start_date_str and end_date_str:
+#             start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+#             end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+#             filters &= Q(date__range=(start_date, end_date))
+
+#         transactions = Transaction.objects.filter(filters)
+
+#         # Filter by supplier name if transaction type is 'payment'
+#         if transaction_type == 'payment' and supplier_name:
+#             payments = Payment.objects.filter(
+#                 supplier__name__icontains=supplier_name)
+#             payment_ids = payments.values_list('id', flat=True)
+#             transactions = transactions.filter(id__in=payment_ids)
+
+#         # Process each transaction to include supplier name and invoice if payment
+#         for transaction in transactions:
+#             if transaction.transaction_type == 'payment':
+#                 payment = Payment.objects.filter(
+#                     amount=transaction.amount, date=transaction.date).first()
+#                 transaction.supplier_name = payment.supplier.name if payment else ''
+#                 transaction.invoice = payment.invoice if payment else ''
+#             else:
+#                 transaction.supplier_name = ''
+#                 transaction.invoice = ''
+
+#         context = {
+#             'transactions': transactions,
+#             'transaction_type': transaction_type,
+#             'supplier_name': supplier_name,
+#             'amount': amount,
+#             'start_date': start_date_str,
+#             'end_date': end_date_str,
+#         }
+
+#         return render(request, self.template_name, context)
+
 class TransactionHistoryView(View):
     template_name = 'transaction_history.html'
+
+    def parse_date(self, date_str):
+        try:
+            return datetime.strptime(date_str, '%d%m%Y').date()
+        except ValueError:
+            return None
 
     def get(self, request):
         # Fetch and filter data based on request parameters
@@ -143,9 +201,11 @@ class TransactionHistoryView(View):
             filters &= Q(transaction_type=transaction_type)
         if amount:
             filters &= Q(amount=amount)
-        if start_date_str and end_date_str:
-            start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
-            end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+
+        start_date = self.parse_date(start_date_str)
+        end_date = self.parse_date(end_date_str)
+
+        if start_date and end_date:
             filters &= Q(date__range=(start_date, end_date))
 
         transactions = Transaction.objects.filter(filters)

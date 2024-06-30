@@ -102,7 +102,6 @@ class CustomPasswordChangeView(PasswordChangeView):
     template_name = 'change_password.html'
     success_url = reverse_lazy('password_change_done') 
 
-
 class AdminHomeView(View):
     template_name = 'admin_dashboard.html'
 
@@ -110,24 +109,40 @@ class AdminHomeView(View):
         # Fetch data from models
         products = Product.objects.all()
         orders = Order.objects.all()
-        orderProduct = OrderProduct.objects.all()
-        transactions = Transaction.objects.all()
+        orderProducts = OrderProduct.objects.all()
+        transactions = Transaction.objects.filter(
+            transaction_type__in=['payment', 'expense'])
 
         # Data processing for charts
         product_count = products.count()
+        order_count = orders.count()
+        orderProduct_count = orderProducts.count()
+        transaction_count = transactions.count()
+
         total_buy_price = sum(product.buy_price for product in products)
         total_sell_price = sum(product.sell_price for product in products)
         total_order_price = sum(order.total for order in orders)
-        # total_order_price = sum(orderProduct.price for order in orders)
-        total_transactions = transactions.count()
+
+        # Calculate total cost of products in orders
+        total_order_product_cost = sum(orderProduct.product.buy_price for orderProduct in orderProducts)
+
+        # Calculate total expenses from transactions
+        total_expenses = sum(transaction.amount for transaction in transactions if transaction.transaction_type == 'expense')
+
+        # Calculate revenue
+        revenue = total_order_price - total_order_product_cost + total_expenses
 
         context = {
+            'order_count': order_count,
             'product_count': product_count,
+            'transaction_count': transaction_count,
+            'orderProduct_count': orderProduct_count,
             'total_buy_price': total_buy_price,
             'total_sell_price': total_sell_price,
             'total_order_price': total_order_price,
-            'total_transactions': total_transactions,
-            'transactions': transactions
+            'total_transactions': transaction_count,
+            'transactions': transactions,
+            'revenue': revenue  # Add the calculated revenue to the context
         }
 
         return render(request, self.template_name, context)
