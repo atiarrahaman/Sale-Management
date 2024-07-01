@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}Orders{% endblock %}
+{% load crispy_forms_tags %}
+{% block content %}
+
+<div class="container">
+<h1>Sales Report</h1>
+
+    <form method="post" class="d-flex justify-content-center mb-4">
+    {% csrf_token %}
+    <div class="input-group">
+                <label for="start_date" class="input-group-text">From:</label>
+                <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date }}" />
+            </div>
+            <div class="input-group mx-2">
+                <label for="end_date" class="input-group-text">To:</label>
+                <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date }}" />
+            </div>
+    <button type="submit" class="btn btn-primary px-4 fs-4">Filter</button>
+</form>
+
+<h3 class="mb-3 bg-secondary text-white py-2 text-center">Grand Total: {{ grand_total }}</h3>
+<table class="table table-bordered bold-table-border">
+    <thead class="thead-dark">
+        <tr>
+            <th>Product Name</th>
+            <th>Unit Price</th>
+            <th>Quantity Sold</th>
+            
+            <th>Subtotal</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in sales_report %}
+        <tr>
+            <td>{{ item.product_name }}</td>
+            <td>{{ item.product_price }}</td>
+            <td>{{ item.quantity_sold }}</td>
+            
+            <td>{{ item.subtotal }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+    <tfoot>
+        <tr>
+            <td colspan="3"><strong>Total Amount</strong></td>
+            <td><strong>{{ grand_total }}</strong></td>
+        </tr>
+    </tfoot>
+</table>
+</div>
+
+{% endblock content %}

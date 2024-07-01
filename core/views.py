@@ -125,12 +125,12 @@ class AdminHomeView(View):
 
         # Calculate total cost of products in orders
         total_order_product_cost = sum(orderProduct.product.buy_price for orderProduct in orderProducts)
-
+        total_sell_revenue = total_order_price-total_order_product_cost
         # Calculate total expenses from transactions
         total_expenses = sum(transaction.amount for transaction in transactions if transaction.transaction_type == 'expense')
 
         # Calculate revenue
-        revenue = total_order_price - total_order_product_cost + total_expenses
+        revenue = total_sell_revenue -total_expenses
 
         context = {
             'order_count': order_count,

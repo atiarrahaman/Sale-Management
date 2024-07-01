@@ -1,3 +1,4 @@
+from django.db.models import Sum
 from django.views.generic import TemplateView
 from django.shortcuts import redirect,render,get_object_or_404
 from django.contrib import messages
@@ -179,6 +180,7 @@ class TransactionView(TemplateView):
 
 #         return render(request, self.template_name, context)
 
+
 class TransactionHistoryView(View):
     template_name = 'transaction_history.html'
 
@@ -217,16 +219,24 @@ class TransactionHistoryView(View):
             payment_ids = payments.values_list('id', flat=True)
             transactions = transactions.filter(id__in=payment_ids)
 
-        # Process each transaction to include supplier name and invoice if payment
-        for transaction in transactions:
-            if transaction.transaction_type == 'payment':
-                payment = Payment.objects.filter(
-                    amount=transaction.amount, date=transaction.date).first()
-                transaction.supplier_name = payment.supplier.name if payment else ''
-                transaction.invoice = payment.invoice if payment else ''
-            else:
-                transaction.supplier_name = ''
-                transaction.invoice = ''
+        # Calculate total order revenue
+
+        orders=Order.objects.all()
+        orderProducts = OrderProduct.objects.all()
+        total_sell = sum(order.total for order in orders)
+        total_order_product_cost = sum(
+            orderProduct.product.buy_price for orderProduct in orderProducts)
+        # print(total_order_product_cost)
+        
+
+        # Calculate total expenses
+        total_expenses = sum(
+            transaction.amount for transaction in transactions if transaction.transaction_type == 'expense')
+        total_sell_price = total_sell-total_order_product_cost
+        # Calculate total cost of order products
+        
+        revenue = total_sell_price - total_expenses
+
 
         context = {
             'transactions': transactions,
@@ -235,6 +245,10 @@ class TransactionHistoryView(View):
             'amount': amount,
             'start_date': start_date_str,
             'end_date': end_date_str,
+            'revenue': revenue,
+            'total_sell_price':total_sell_price,
+            'total_expenses': total_expenses
+
         }
 
         return render(request, self.template_name, context)

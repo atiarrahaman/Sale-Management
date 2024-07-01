@@ -365,3 +365,55 @@ class DamageProductListView(TemplateView):
         context['total_damage_quantity'] = total_damage_quantity
         context['total_damage_price'] = total_damage_price
         return context
+
+
+def sales_report(request):
+    # Get all orders initially
+    orders = Order.objects.all()
+
+    if request.method == 'POST':
+        start_date_str = request.POST.get('start_date')
+        end_date_str = request.POST.get('end_date')
+
+        # Parse start and end dates
+        start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+        end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+
+        # Filter orders by date range
+        orders = Order.objects.filter(
+            created_at__date__range=[start_date, end_date])
+
+    # Initialize data dictionary to store sales report
+    sales_report = {}
+
+    for order in orders:
+        order_products = OrderProduct.objects.filter(order=order)
+        for op in order_products:
+            product_id = op.product.id
+            product_name = op.product.name
+            quantity_sold = op.quantity
+            product_price = op.price
+            subtotal = op.subtotal
+
+            if product_id not in sales_report:
+                sales_report[product_id] = {
+                    'product_name': product_name,
+                    'quantity_sold': quantity_sold,
+                    'product_price': product_price,
+                    'subtotal': subtotal
+                }
+            else:
+                sales_report[product_id]['quantity_sold'] += quantity_sold
+                sales_report[product_id]['subtotal'] += subtotal
+
+    # Calculate grand total
+    grand_total = sum(report['subtotal'] for report in sales_report.values())
+
+    context = {
+        'sales_report': sales_report.values(),
+        'grand_total': grand_total,
+        'start_date': start_date_str if request.method == 'POST' else '',
+        'end_date': end_date_str if request.method == 'POST' else '',
+    }
+
+    return render(request, 'sales_report.html', context)
