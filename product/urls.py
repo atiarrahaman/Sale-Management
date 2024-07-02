@@ -12,6 +12,7 @@ urlpatterns = [
          name='return_products'),
     path('damage-products/', views.DamageProductListView.as_view(),
          name='damage_products'),
-    path('sales_report/', views.sales_report, name='sales_report')
+    path('sales_report/', views.sales_report, name='sales_report'),
+    
 
 ]

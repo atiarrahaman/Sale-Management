@@ -17,6 +17,8 @@
         integrity="sha384-vSIIfh2YWi9wW0r9iZe7RJPrKwp6bG+s9QZMoITbCckVJqGCCRhc+ccxNcdpHuYu" crossorigin="anonymous">
     <!--Chartjs CDN-->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js"></script>
+
+    
     <style>
         body {
             display: flex;
@@ -202,11 +204,25 @@ Make Staff</span></a></li>
                     <li><a class="dropdown-item" href="{% url 'inventory' %}"><i class="fas fa-archive"></i>&nbsp<span> Inventory</span></a></li>
                     
                     <li><a class="dropdown-item" href="{% url 'transaction_history' %}"><i class="fas fa-file-invoice-dollar"></i>&nbsp<span>Transaction</span></a></li>
-                    <li><a class="dropdown-item" href="{% url 'return_products' %}">Return</a></li>
-                    <li><a class="dropdown-item" href="{% url 'damage_products' %}">Damage</a></li>
+                    <li><a class="dropdown-item" href="{% url 'return_products' %}"><i class="fas fa-reply-all"></i>&nbsp<span>Return</span></a></li>
+                    <li><a class="dropdown-item" href="{% url 'damage_products' %}"><i class="fas fa-exclamation-triangle"></i>&nbsp <span>Damage</span></a></li>
                 </ul>
             </li>
-            <a class="nav-link" href="#"><i class="fas fa-cog"></i> <span>Settings</span></a>
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
+                    data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-users-slash"></i>
+ <span>Settings</span>
+                </a>
+                <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                    <li><a class="dropdown-item" href="{% url 'profile' %}"><i class="fas fa-user-circle"></i>&nbsp<span>
+Profile</span></a></li>
+                    <li><a class="dropdown-item" href="{% url 'user_logout' %}"><i class="fas fa-sign-out-alt"></i> &nbsp<span>Logout</span></a></li>
+                    
+                    
+                </ul>
+            </li>
+            
         </nav>
     </div>
 
@@ -245,6 +261,11 @@ Make Staff</span></a></li>
             });
         });
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js"
+    integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
+    crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.16.1/dist/umd/popper.min.js"
+    integrity="sha384-uS1m9kR10cIZIhJUMFZJ9Zl43O+Fq
 </body>
 
 </html>
