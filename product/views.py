@@ -44,43 +44,10 @@ class AddProductView(CreateView):
 class CartView(TemplateView):
     template_name = 'cart.html'
 
-    def post(self, request, *args, **kwargs):
-        product_id = request.POST.get('product')
-        product_obj = get_object_or_404(Product, id=product_id)
-        cart_id = request.session.get("cart_id")
-
-        try:
-            cart_obj = Cart.objects.get(id=cart_id)
-        except ObjectDoesNotExist:
-            cart_obj = Cart.objects.create(user=request.user, total=0)
-            request.session['cart_id'] = cart_obj.id
-
-        quantity = 1  # Default quantity
-        if 'quantity' in request.POST:
-            quantity = int(request.POST.get('quantity', 1))
-        
-        if quantity > product_obj.qty:
-            messages.error(
-                request, f'Cannot add {quantity} {product_obj.unit} of {product_obj.name} to the cart. Only {product_obj.qty} available.')
-        else:
-            cartproduct, created = CartProduct.objects.get_or_create(
-                cart=cart_obj, product=product_obj,
-                defaults={'quantity': quantity, 'price': product_obj.sell_price, 'subtotal': product_obj.sell_price * Decimal(quantity)}
-            )
-            if not created:
-                cartproduct.quantity += quantity
-                cartproduct.subtotal += product_obj.sell_price * Decimal(quantity)
-                cartproduct.save()
-            cart_obj.total += product_obj.sell_price * Decimal(quantity)
-            cart_obj.save()
-            messages.success(
-                request, f'{product_obj.name} has been added to the cart')
-
-        return redirect('cart')
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         cart_id = self.request.session.get("cart_id")
+
         try:
             cart_obj = Cart.objects.get(id=cart_id)
             cart_products = cart_obj.cartproduct_set.all()
@@ -90,10 +57,158 @@ class CartView(TemplateView):
             cart_total = 0
 
         context['form'] = CartProductForm()
+        context['order_form'] = OrderForm()
         context['products'] = Product.objects.all()
         context['cart_products'] = cart_products
         context['cart_total'] = cart_total
         return context
+
+    def post(self, request, *args, **kwargs):
+        action = request.POST.get('action')
+
+        if action == 'add_to_cart':
+            product_id = request.POST.get('product')
+            product_obj = get_object_or_404(Product, id=product_id)
+            cart_id = request.session.get("cart_id")
+
+            try:
+                cart_obj = Cart.objects.get(id=cart_id)
+            except ObjectDoesNotExist:
+                cart_obj = Cart.objects.create(user=request.user, total=0)
+                request.session['cart_id'] = cart_obj.id
+
+            quantity = 1  # Default quantity
+            if 'quantity' in request.POST:
+                quantity = int(request.POST.get('quantity', 1))
+
+            if quantity > product_obj.qty:
+                messages.error(
+                    request, f'Cannot add {quantity} {product_obj.unit} of {product_obj.name} to the cart. Only {product_obj.qty} available.')
+            else:
+                cartproduct, created = CartProduct.objects.get_or_create(
+                    cart=cart_obj, product=product_obj,
+                    defaults={'quantity': quantity, 'price': product_obj.sell_price,
+                              'subtotal': product_obj.sell_price * Decimal(quantity)}
+                )
+                if not created:
+                    cartproduct.quantity += quantity
+                    cartproduct.subtotal += product_obj.sell_price * \
+                        Decimal(quantity)
+                    cartproduct.save()
+                cart_obj.total += product_obj.sell_price * Decimal(quantity)
+                cart_obj.save()
+                messages.success(
+                    request, f'{product_obj.name} has been added to the cart')
+
+            return redirect('cart')
+
+        elif action == 'place_order':
+            cart_id = request.session.get("cart_id")
+
+            try:
+                cart_obj = Cart.objects.get(id=cart_id)
+            except ObjectDoesNotExist:
+                cart_obj = None
+
+            order_form = OrderForm(request.POST)
+            if order_form.is_valid() and cart_obj:
+                order = order_form.save(commit=False)
+                order.total = cart_obj.total
+                order.save()
+
+                for cart_product in cart_obj.cartproduct_set.all():
+                    # Update product quantity
+                    product = cart_product.product
+                    if product.qty is not None and cart_product.quantity <= product.qty:
+                        product.qty -= cart_product.quantity
+                        product.save()
+
+                        # Create OrderProduct
+                        OrderProduct.objects.create(
+                            order=order,
+                            product=cart_product.product,
+                            price=cart_product.price,
+                            quantity=cart_product.quantity,
+                            subtotal=cart_product.subtotal
+                        )
+                    else:
+                        messages.error(
+                            request, f'Not enough stock for {product.name}.')
+                        # Redirect to order page if stock is insufficient
+                        return redirect('cart')
+
+                cart_obj.cartproduct_set.all().delete()
+                del request.session['cart_id']
+                messages.success(request, 'Order placed successfully!')
+
+                print_template = render_to_string('print_order.html', {
+                    'order': order,
+                    'order_products': order.orderproduct_set.all(),
+                    'order_total': order.total
+                })
+                
+
+                return HttpResponse(print_template)
+
+            context = self.get_context_data()
+            context['order_form'] = order_form
+            return self.render_to_response(context)
+
+        return redirect('cart')
+
+# class CartView(TemplateView):
+#     template_name = 'cart.html'
+
+#     def post(self, request, *args, **kwargs):
+#         product_id = request.POST.get('product')
+#         product_obj = get_object_or_404(Product, id=product_id)
+#         cart_id = request.session.get("cart_id")
+
+#         try:
+#             cart_obj = Cart.objects.get(id=cart_id)
+#         except ObjectDoesNotExist:
+#             cart_obj = Cart.objects.create(user=request.user, total=0)
+#             request.session['cart_id'] = cart_obj.id
+
+#         quantity = 1  # Default quantity
+#         if 'quantity' in request.POST:
+#             quantity = int(request.POST.get('quantity', 1))
+        
+#         if quantity > product_obj.qty:
+#             messages.error(
+#                 request, f'Cannot add {quantity} {product_obj.unit} of {product_obj.name} to the cart. Only {product_obj.qty} available.')
+#         else:
+#             cartproduct, created = CartProduct.objects.get_or_create(
+#                 cart=cart_obj, product=product_obj,
+#                 defaults={'quantity': quantity, 'price': product_obj.sell_price, 'subtotal': product_obj.sell_price * Decimal(quantity)}
+#             )
+#             if not created:
+#                 cartproduct.quantity += quantity
+#                 cartproduct.subtotal += product_obj.sell_price * Decimal(quantity)
+#                 cartproduct.save()
+#             cart_obj.total += product_obj.sell_price * Decimal(quantity)
+#             cart_obj.save()
+#             messages.success(
+#                 request, f'{product_obj.name} has been added to the cart')
+
+#         return redirect('cart')
+
+#     def get_context_data(self, **kwargs):
+#         context = super().get_context_data(**kwargs)
+#         cart_id = self.request.session.get("cart_id")
+#         try:
+#             cart_obj = Cart.objects.get(id=cart_id)
+#             cart_products = cart_obj.cartproduct_set.all()
+#             cart_total = cart_obj.total
+#         except ObjectDoesNotExist:
+#             cart_products = []
+#             cart_total = 0
+
+#         context['form'] = CartProductForm()
+#         context['products'] = Product.objects.all()
+#         context['cart_products'] = cart_products
+#         context['cart_total'] = cart_total
+#         return context
 
 # class CartView(TemplateView):
 #     template_name = 'cart.html'

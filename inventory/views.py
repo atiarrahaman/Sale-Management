@@ -368,3 +368,4 @@ class ReturnToSupplierProductListView(TemplateView):
         context['total_return_price'] = total_return_price
 
         return context
+
