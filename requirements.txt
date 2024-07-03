@@ -24,6 +24,7 @@ humanize
 idna
 lxml
 Markdown
+matplotlib
 MouseInfo
 mss
 numpy
