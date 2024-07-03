@@ -20,6 +20,8 @@ from django.http import HttpResponseNotAllowed
 from django.db.models import Sum,Q, F, FloatField
 from datetime import timedelta
 from django.utils import timezone
+from django.http import JsonResponse
+from transaction.models import Transaction, Balance
 
 class AddProductView(CreateView):
     template_name = 'add_product.html'
@@ -42,44 +44,10 @@ class AddProductView(CreateView):
 class CartView(TemplateView):
     template_name = 'cart.html'
 
-    def post(self, request, *args, **kwargs):
-        product_id = request.POST.get('product')
-        product_obj = get_object_or_404(Product, id=product_id)
-        cart_id = request.session.get("cart_id")
-
-        try:
-            cart_obj = Cart.objects.get(id=cart_id)
-        except ObjectDoesNotExist:
-            cart_obj = Cart.objects.create(user=request.user, total=0)
-            request.session['cart_id'] = cart_obj.id
-
-        form = CartProductForm(request.POST)
-        if form.is_valid():
-            quantity = form.cleaned_data['quantity']
-            if int(quantity) > int(product_obj.qty):
-                messages.error(
-                    request, f'Cannot add {quantity} {product_obj.unit} of {product_obj.name} to the cart. Only {product_obj.qty} available.')
-            else:
-                cartproduct = form.save(commit=False)
-                cartproduct.cart = cart_obj
-                cartproduct.quantity = quantity
-                cartproduct.price = product_obj.sell_price
-                cartproduct.subtotal = product_obj.sell_price * \
-                    Decimal(quantity)
-                cartproduct.save()
-                cart_obj.total += cartproduct.subtotal
-                cart_obj.save()
-                messages.success(
-                    request, f'{product_obj.name} has been added to the cart')
-        else:
-            messages.error(
-                request, 'Failed to add product to the cart. Please try again.')
-
-        return redirect('cart')
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         cart_id = self.request.session.get("cart_id")
+
         try:
             cart_obj = Cart.objects.get(id=cart_id)
             cart_products = cart_obj.cartproduct_set.all()
@@ -89,9 +57,119 @@ class CartView(TemplateView):
             cart_total = 0
 
         context['form'] = CartProductForm()
+        context['order_form'] = OrderForm()
+        context['products'] = Product.objects.all()
         context['cart_products'] = cart_products
         context['cart_total'] = cart_total
         return context
+
+    def post(self, request, *args, **kwargs):
+        action = request.POST.get('action')
+
+        if action == 'add_to_cart':
+            product_id = request.POST.get('product')
+            product_obj = get_object_or_404(Product, id=product_id)
+            cart_id = request.session.get("cart_id")
+
+            try:
+                cart_obj = Cart.objects.get(id=cart_id)
+            except ObjectDoesNotExist:
+                cart_obj = Cart.objects.create(user=request.user, total=0)
+                request.session['cart_id'] = cart_obj.id
+
+            quantity = 1  # Default quantity
+            if 'quantity' in request.POST:
+                quantity = int(request.POST.get('quantity', 1))
+
+            if quantity > product_obj.qty:
+                messages.error(
+                    request, f'Cannot add {quantity} {product_obj.unit} of {product_obj.name} to the cart. Only {product_obj.qty} available.')
+            else:
+                cartproduct, created = CartProduct.objects.get_or_create(
+                    cart=cart_obj, product=product_obj,
+                    defaults={'quantity': quantity, 'price': product_obj.sell_price,
+                              'subtotal': product_obj.sell_price * Decimal(quantity)}
+                )
+                if not created:
+                    cartproduct.quantity += quantity
+                    cartproduct.subtotal += product_obj.sell_price * \
+                        Decimal(quantity)
+                    cartproduct.save()
+                cart_obj.total += product_obj.sell_price * Decimal(quantity)
+                cart_obj.save()
+                messages.success(
+                    request, f'{product_obj.name} has been added to the cart')
+
+            return redirect('cart')
+
+        elif action == 'place_order':
+            cart_id = request.session.get("cart_id")
+
+            try:
+                cart_obj = Cart.objects.get(id=cart_id)
+            except ObjectDoesNotExist:
+                cart_obj = None
+
+            order_form = OrderForm(request.POST)
+            if order_form.is_valid() and cart_obj:
+                order = order_form.save(commit=False)
+                order.total = cart_obj.total
+                order.save()
+
+                for cart_product in cart_obj.cartproduct_set.all():
+                    # Update product quantity
+                    product = cart_product.product
+                    if product.qty is not None and cart_product.quantity <= product.qty:
+                        product.qty -= cart_product.quantity
+                        product.save()
+
+                        # Create OrderProduct
+                        OrderProduct.objects.create(
+                            order=order,
+                            product=cart_product.product,
+                            price=cart_product.price,
+                            quantity=cart_product.quantity,
+                            subtotal=cart_product.subtotal
+                        )
+                    else:
+                        messages.error(
+                            request, f'Not enough stock for {product.name}.')
+                        # Redirect to order page if stock is insufficient
+                        return redirect('cart')
+
+                # Create Transaction record for the sale            
+                shop_owner = request.user.shopowner
+                balance, created = Balance.objects.get_or_create(
+                    user=shop_owner)
+
+                # Create Transaction record for the sale
+                balance.amount += cart_obj.total
+                balance.save()
+
+                Transaction.objects.create(
+                    transaction_type='sale',
+                    amount=cart_obj.total,
+                    balance_after_transaction=balance.amount,
+                    description=f"Sale for order {order.id}"
+                )
+
+                cart_obj.cartproduct_set.all().delete()
+                del request.session['cart_id']
+                messages.success(request, 'Order placed successfully!')
+
+                print_template = render_to_string('print_order.html', {
+                    'order': order,
+                    'order_products': order.orderproduct_set.all(),
+                    'order_total': order.total
+                })
+
+                return HttpResponse(print_template)
+
+            context = self.get_context_data()
+            context['order_form'] = order_form
+            return self.render_to_response(context)
+
+        return redirect('cart')
 
 
 class ManageCartView(View):
@@ -207,6 +285,7 @@ class OrderView(TemplateView):
             cart_obj.cartproduct_set.all().delete()
             del request.session['cart_id']
             messages.success(request, 'Order placed successfully!')
+            
 
 
             print_template = render_to_string('print_order.html', {
@@ -364,3 +443,55 @@ class DamageProductListView(TemplateView):
         context['total_damage_quantity'] = total_damage_quantity
         context['total_damage_price'] = total_damage_price
         return context
+
+
+def sales_report(request):
+    # Get all orders initially
+    orders = Order.objects.all()
+
+    if request.method == 'POST':
+        start_date_str = request.POST.get('start_date')
+        end_date_str = request.POST.get('end_date')
+
+        # Parse start and end dates
+        start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+        end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+
+        # Filter orders by date range
+        orders = Order.objects.filter(
+            created_at__date__range=[start_date, end_date])
+
+    # Initialize data dictionary to store sales report
+    sales_report = {}
+
+    for order in orders:
+        order_products = OrderProduct.objects.filter(order=order)
+        for op in order_products:
+            product_id = op.product.id
+            product_name = op.product.name
+            quantity_sold = op.quantity
+            product_price = op.price
+            subtotal = op.subtotal
+
+            if product_id not in sales_report:
+                sales_report[product_id] = {
+                    'product_name': product_name,
+                    'quantity_sold': quantity_sold,
+                    'product_price': product_price,
+                    'subtotal': subtotal
+                }
+            else:
+                sales_report[product_id]['quantity_sold'] += quantity_sold
+                sales_report[product_id]['subtotal'] += subtotal
+
+    # Calculate grand total
+    grand_total = sum(report['subtotal'] for report in sales_report.values())
+
+    context = {
+        'sales_report': sales_report.values(),
+        'grand_total': grand_total,
+        'start_date': start_date_str if request.method == 'POST' else '',
+        'end_date': end_date_str if request.method == 'POST' else '',
+    }
+
+    return render(request, 'sales_report.html', context)

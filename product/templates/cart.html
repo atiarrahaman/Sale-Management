@@ -1,22 +1,31 @@
 {% extends 'base.html' %}
-{% block title %}Cart{% endblock %}
+{% block title %}Cart and Order{% endblock %}
 {% load crispy_forms_tags %}
 {% load humanize %}
 {% block content %}
 
-<div class="container my-5">
+<div class="container my-2">
     <div class="row">
-        <div class="col-md-4">
-            <h2>Add Product to Cart</h2>
-            <form method="post" enctype="multipart/form-data">
+        <div class="col-md-3">
+            <h2>Add Product</h2>
+            <form method="post" enctype="multipart/form-data" id="add-to-cart-form">
                 {% csrf_token %}
-                {{ form.as_p }}
-                <!-- <button type="submit" class="btn btn-primary">Add to Cart</button> -->
+                {{ form.product.label_tag }}
+                {{ form.product }}
+                <input type="hidden" name="quantity" value="1"> <!-- Default quantity -->
+                <input type="hidden" name="action" value="add_to_cart"> <!-- Action for adding to cart -->
+                <button type="submit" class="btn btn-primary mt-5">Add to Cart</button>
             </form>
             <hr>
-            <a class="btn btn-primary" href="{% url 'order' %}">Order Now</a>
+            <h3>Customer Detail</h3>
+            <form action="" method="post" id="orderForm" class="shadow-lg p-4 rounded-5">
+                {% csrf_token %}
+                {{ order_form|crispy }}
+                <input type="hidden" name="action" value="place_order"> <!-- Action for placing order -->
+                <button class="btn btn-primary" type="submit">Confirm Order</button>
+            </form>
         </div>
-        <div class="col-md-8">
+        <div class="col-md-9">
             <!-- Cart Products List -->
             <h2>Cart Products</h2>
             <div class="table-responsive">
@@ -70,10 +79,25 @@
 
 {% block extrascripts %}
 <script>
-    // JavaScript/jQuery to update cart on input change
     $(document).ready(function() {
-        $('.update-quantity-input, .update-price-input').change(function() {
-            $(this).closest('form').submit(); // Submit the form on change
+        // Handle form submission when Enter is pressed
+        $('#add-to-cart-form').submit(function(event) {
+            event.preventDefault(); // Prevent default form submission
+            var formData = $(this).serialize(); // Serialize form data
+            $.post("{% url 'cart_order' %}", formData)
+                .done(function(response) {
+                    // Handle success (if needed)
+                    console.log(response);
+                })
+                .fail(function(error) {
+                    // Handle errors (if needed)
+                    console.error(error);
+                });
+        });
+
+        // Handle Enter key press on select dropdown
+        $('select[name="product"]').change(function() {
+            $('#add-to-cart-form').submit(); // Submit the form when product is selected
         });
     });
 </script>

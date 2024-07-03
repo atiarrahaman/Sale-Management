@@ -1,0 +1,94 @@
+<!-- transactions.html -->
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Record Expense</h2>
+<form method="post" action="{% url 'transactions' %}">
+    {% csrf_token %}
+    {{ expense_form.as_p }}
+    <button type="submit" name="expense_submit" class="btn btn-primary">Record Expense</button>
+</form>
+
+<h2>Unpaid Suppliers</h2>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Supplier</th>
+            <th>Amount Due</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for supplier in suppliers %}
+        <tr>
+            <td>{{ supplier.name }}</td>
+            <td>{{ supplier.unpaid_amount }}</td>
+            <td>
+                <button type="button" class="btn btn-primary return-to-supplier-button"
+                        data-toggle="modal" data-target="#paymentModal{{ supplier.id }}"
+                        data-supplier-id="{{ supplier.id }}" data-supplier-name="{{ supplier.name }}">
+                    Pay
+                </button>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+
+
+<!-- Payment Modals -->
+{% for supplier in suppliers %}
+<div class="modal fade" id="paymentModal{{ supplier.id }}" tabindex="-1" role="dialog" aria-labelledby="paymentModalLabel{{ supplier.id }}" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="paymentModalLabel{{ supplier.id }}">Payment to {{ supplier.name }}</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="paymentForm{{ supplier.id }}" method="post" action="{% url 'transactions' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="supplier_name_modal{{ supplier.id }}">Supplier Name</label>
+                        <input type="text" class="form-control" id="supplier_name_modal{{ supplier.id }}" name="supplier_name" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="amount{{ supplier.id }}">Amount</label>
+                        <input type="text" class="form-control" id="amount{{ supplier.id }}" name="amount" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="invoice{{ supplier.id }}">Invoice</label>
+                        <input type="text" class="form-control" id="invoice{{ supplier.id }}" name="invoice" required>
+                    </div>
+                    <input type="hidden" id="supplier_id{{ supplier.id }}" name="supplier">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="submit" name="payment_submit" class="btn btn-primary">Submit Payment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var paymentButtons = document.querySelectorAll('.return-to-supplier-button');
+
+    paymentButtons.forEach(function(button) {
+        button.addEventListener('click', function() {
+            var supplierId = button.getAttribute('data-supplier-id');
+            var supplierName = button.getAttribute('data-supplier-name');
+
+          document.getElementById('supplier_name_modal' + supplierId).value = supplierName;
+            document.getElementById('supplier_id' + supplierId).value = supplierId;
+        });
+    });
+});
+</script>
+
+{% endblock %}

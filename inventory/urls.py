@@ -15,4 +15,5 @@ urlpatterns = [
          name='return_to_supplier'),
     path('return-supplier-products/', views.ReturnToSupplierProductListView.as_view(),
          name='return-supplier-products'),
+
 ]

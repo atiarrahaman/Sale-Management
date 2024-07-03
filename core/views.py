@@ -6,7 +6,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.views import View
 from product.models import Product,Order
-from transaction.models import Exprensive
+from transaction.models import Expense
 from django.utils.decorators import method_decorator
 from django.db.models import Sum
 from datetime import datetime
@@ -16,7 +16,8 @@ from .models import Staff
 from .filters import StaffFilter
 from django.contrib.auth.models import User
 from django.contrib.auth.views import PasswordChangeView
-
+from product.models import Product, Order, OrderProduct
+from transaction.models import Transaction, Payment, Expense
 
 class StaffCreateView(View):
     form_class = StaffCreationForm
@@ -104,48 +105,47 @@ class CustomPasswordChangeView(PasswordChangeView):
 class AdminHomeView(View):
     template_name = 'admin_dashboard.html'
 
-    def get_queryset(self):
-        queryset = Exprensive.objects.all()
-        self.balance = queryset.aggregate(Sum('amount'))['amount__sum']
-        self.total = queryset.aggregate(Sum('amount'))['amount__sum'] or 0
-        return queryset
+    def get(self, request):
+        # Fetch data from models
+        products = Product.objects.all()
+        orders = Order.objects.all()
+        orderProducts = OrderProduct.objects.all()
+        transactions = Transaction.objects.filter(
+            transaction_type__in=['payment', 'expense'])
 
-    def get(self, request, *args, **kwargs):
-        product = Product.objects.all()
-        order=Order.objects.all()
+        # Data processing for charts
+        product_count = products.count()
+        order_count = orders.count()
+        orderProduct_count = orderProducts.count()
+        transaction_count = transactions.count()
+
+        total_buy_price = sum(product.buy_price for product in products)
+        total_sell_price = sum(product.sell_price for product in products)
+        total_order_price = sum(order.total for order in orders)
+
+        # Calculate total cost of products in orders
+        total_order_product_cost = sum(orderProduct.product.buy_price for orderProduct in orderProducts)
+        total_sell_revenue = total_order_price-total_order_product_cost
+        # Calculate total expenses from transactions
+        total_expenses = sum(transaction.amount for transaction in transactions if transaction.transaction_type == 'expense')
+
+        # Calculate revenue
+        revenue = total_sell_revenue -total_expenses
+
         context = {
-            'object_list': self.get_queryset(),
-            'balance': self.balance,
-            'total': self.total,
-            'product': product,
-            'order': order,
+            'order_count': order_count,
+            'product_count': product_count,
+            'transaction_count': transaction_count,
+            'orderProduct_count': orderProduct_count,
+            'total_buy_price': total_buy_price,
+            'total_sell_price': total_sell_price,
+            'total_order_price': total_order_price,
+            'total_transactions': transaction_count,
+            'transactions': transactions,
+            'revenue': revenue  # Add the calculated revenue to the context
         }
+
         return render(request, self.template_name, context)
-
-    def post(self, request, *args, **kwargs):
-        start_date_str = request.POST.get('start_date')
-        end_date_str = request.POST.get('end_date')
-
-        if start_date_str and end_date_str:
-            start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
-            end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
-
-            queryset = Exprensive.objects.filter(
-                timestamps__date__gte=start_date,
-                timestamps__date__lte=end_date
-            )
-            self.balance = queryset.aggregate(Sum('amount'))['amount__sum']
-            self.total = queryset.aggregate(Sum('amount'))['amount__sum'] or 0
-
-            context = {
-                'object_list': queryset,
-                'balance': self.balance,
-                'total': self.total,
-            }
-
-            return render(request, self.template_name, context)
-
-        return redirect('admin_dashboard')
 
 
 @login_required
