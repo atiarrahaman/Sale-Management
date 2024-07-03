@@ -31,6 +31,7 @@ numpy
 opencv-contrib-python
 Pillow
 pipenv
+plotly
 platformdirs
 psycopg2
 psycopg2-binary
