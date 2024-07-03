@@ -1,13 +1,14 @@
 from django.db import models
 from inventory.models import Supplier
 from django.contrib.auth.models import User
+from core.models import ShopOwner
 # Create your models here.
 
 
 # Expense
 
 class Balance(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(ShopOwner, on_delete=models.CASCADE)
     amount = models.DecimalField(decimal_places=2, max_digits=12, default=0)
 
     def __str__(self):

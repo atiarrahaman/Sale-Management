@@ -1,4 +1,4 @@
-from django.db.models import Sum
+from django.db.models import Sum , OuterRef, Subquery
 from django.views.generic import TemplateView
 from django.shortcuts import redirect,render,get_object_or_404
 from django.contrib import messages
@@ -12,7 +12,7 @@ import plotly.graph_objects as go
 from io import BytesIO
 import base64
 from product.models import Product, Order, OrderProduct
-from transaction.models import Transaction,Payment,Expense
+from transaction.models import Transaction,Payment,Expense,Balance
 from django.views import View
 from django.db.models import Q
 from datetime import datetime
@@ -128,127 +128,133 @@ class TransactionView(TemplateView):
         return self.render_to_response(self.get_context_data())
 
 
-# class TransactionHistoryView(View):
-#     template_name = 'transaction_history.html'
-
-#     def get(self, request):
-#         # Fetch and filter data based on request parameters
-#         transaction_type = request.GET.get('transaction_type', '')
-#         supplier_name = request.GET.get('supplier_name', '')
-#         amount = request.GET.get('amount', '')
-#         start_date_str = request.GET.get('start_date', '')
-#         end_date_str = request.GET.get('end_date', '')
-
-#         filters = Q()
-#         if transaction_type:
-#             filters &= Q(transaction_type=transaction_type)
-#         if amount:
-#             filters &= Q(amount=amount)
-#         if start_date_str and end_date_str:
-#             start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
-#             end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
-#             filters &= Q(date__range=(start_date, end_date))
-
-#         transactions = Transaction.objects.filter(filters)
-
-#         # Filter by supplier name if transaction type is 'payment'
-#         if transaction_type == 'payment' and supplier_name:
-#             payments = Payment.objects.filter(
-#                 supplier__name__icontains=supplier_name)
-#             payment_ids = payments.values_list('id', flat=True)
-#             transactions = transactions.filter(id__in=payment_ids)
-
-#         # Process each transaction to include supplier name and invoice if payment
-#         for transaction in transactions:
-#             if transaction.transaction_type == 'payment':
-#                 payment = Payment.objects.filter(
-#                     amount=transaction.amount, date=transaction.date).first()
-#                 transaction.supplier_name = payment.supplier.name if payment else ''
-#                 transaction.invoice = payment.invoice if payment else ''
-#             else:
-#                 transaction.supplier_name = ''
-#                 transaction.invoice = ''
-
-#         context = {
-#             'transactions': transactions,
-#             'transaction_type': transaction_type,
-#             'supplier_name': supplier_name,
-#             'amount': amount,
-#             'start_date': start_date_str,
-#             'end_date': end_date_str,
-#         }
-
-#         return render(request, self.template_name, context)
 
 
-class TransactionHistoryView(View):
-    template_name = 'transaction_history.html'
-
-    def parse_date(self, date_str):
-        try:
-            return datetime.strptime(date_str, '%d%m%Y').date()
-        except ValueError:
-            return None
+class SummaryView(View):
+    template_name = 'transaction_summary.html'
 
     def get(self, request):
-        # Fetch and filter data based on request parameters
-        transaction_type = request.GET.get('transaction_type', '')
-        supplier_name = request.GET.get('supplier_name', '')
-        amount = request.GET.get('amount', '')
-        start_date_str = request.GET.get('start_date', '')
-        end_date_str = request.GET.get('end_date', '')
+        user = request.user
 
-        filters = Q()
-        if transaction_type:
-            filters &= Q(transaction_type=transaction_type)
-        if amount:
-            filters &= Q(amount=amount)
+        # Get the balance for the current user
+        balance = get_object_or_404(Balance, user=user.shopowner)
 
-        start_date = self.parse_date(start_date_str)
-        end_date = self.parse_date(end_date_str)
-
-        if start_date and end_date:
-            filters &= Q(date__range=(start_date, end_date))
-
-        transactions = Transaction.objects.filter(filters)
-
-        # Filter by supplier name if transaction type is 'payment'
-        if transaction_type == 'payment' and supplier_name:
-            payments = Payment.objects.filter(
-                supplier__name__icontains=supplier_name)
-            payment_ids = payments.values_list('id', flat=True)
-            transactions = transactions.filter(id__in=payment_ids)
-
-        # Calculate total order revenue
-
-        orders=Order.objects.all()
-        orderProducts = OrderProduct.objects.all()
-        total_sell = sum(order.total for order in orders)
-        total_order_product_cost = sum(
-            orderProduct.product.buy_price for orderProduct in orderProducts)
-        # print(total_order_product_cost)
-        
+        # Calculate total sales
+        total_sales = Transaction.objects.filter(
+            transaction_type='sale').aggregate(total_sales=Sum('amount'))
 
         # Calculate total expenses
-        total_expenses = sum(
-            transaction.amount for transaction in transactions if transaction.transaction_type == 'expense')
-        total_sell_price = total_sell-total_order_product_cost
-        # Calculate total cost of order products
-        
-        revenue = total_sell_price - total_expenses
+        total_expenses = Transaction.objects.filter(
+            transaction_type='expense').aggregate(total_expenses=Sum('amount'))
 
+        # Calculate total payments
+        total_payment = Transaction.objects.filter(
+            transaction_type='payment').aggregate(total_payment=Sum('amount'))
+
+        # Calculate profit
+        profit = (total_sales['total_sales'] or 0) - \
+            (total_expenses['total_expenses'] or 0)
+
+        # Get sales and expenses transactions
+        sales_transactions = Transaction.objects.filter(
+            transaction_type='sale')
+        expenses_transactions = Transaction.objects.filter(
+            transaction_type='expense')
+
+        # Get payment transactions and join with Payment model to get supplier name and invoice
+        payment_transactions = Transaction.objects.filter(transaction_type='payment').annotate(
+            supplier_name=Subquery(
+                Payment.objects.filter(
+                    amount=OuterRef('amount'),
+                    date=OuterRef('date')
+                ).values('supplier__name')[:1]
+            ),
+            invoice=Subquery(
+                Payment.objects.filter(
+                    amount=OuterRef('amount'),
+                    date=OuterRef('date')
+                ).values('invoice')[:1]
+            )
+        )
 
         context = {
-            'transactions': transactions,
-            'transaction_type': transaction_type,
-            'supplier_name': supplier_name,
-            'amount': amount,
-            'start_date': start_date_str,
-            'end_date': end_date_str,
-            'revenue': revenue,
-            'total_sell_price':total_sell_price,
-            'total_expenses': total_expenses
+            'balance': balance.amount,
+            'total_sales': total_sales['total_sales'] or 0,
+            'total_expenses': total_expenses['total_expenses'] or 0,
+            'profit': profit,
+            'sales_transactions': sales_transactions,
+            'expenses_transactions': expenses_transactions,
+            'total_payment': total_payment['total_payment'] or 0,
+            'payment_transactions': payment_transactions,
+        }
 
+        return render(request, self.template_name, context)
+
+    def post(self, request):
+        user = request.user
+
+        # Get the balance for the current user
+        balance = get_object_or_404(Balance, user=user.shopowner)
+
+        # Get start and end date from form
+        start_date_str = request.POST.get('start_date')
+        end_date_str = request.POST.get('end_date')
+        supplier = request.POST.get('supplier')
+        amount = request.POST.get('amount')
+
+        filters = Q()
+        if start_date_str and end_date_str:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+            filters &= Q(date__gte=start_date, date__lte=end_date)
+
+        # Calculate total sales
+        total_sales = Transaction.objects.filter(
+            transaction_type='sale').filter(filters).aggregate(total_sales=Sum('amount'))
+
+        # Calculate total expenses
+        total_expenses = Transaction.objects.filter(
+            transaction_type='expense').filter(filters).aggregate(total_expenses=Sum('amount'))
+
+        # Calculate total payments
+        total_payment = Transaction.objects.filter(
+            transaction_type='payment').filter(filters).aggregate(total_payment=Sum('amount'))
+
+        # Calculate profit
+        profit = (total_sales['total_sales'] or 0) - \
+            (total_expenses['total_expenses'] or 0)
+
+        # Get sales and expenses transactions within date range
+        sales_transactions = Transaction.objects.filter(
+            transaction_type='sale').filter(filters)
+        expenses_transactions = Transaction.objects.filter(
+            transaction_type='expense').filter(filters)
+
+        # Get payment transactions within date range and join with Payment model to get supplier name and invoice
+        payment_transactions = Transaction.objects.filter(transaction_type='payment').filter(filters).annotate(
+            supplier_name=Subquery(
+                Payment.objects.filter(
+                    amount=OuterRef('amount'),
+                    date=OuterRef('date')
+                ).values('supplier__name')[:1]
+            ),
+            invoice=Subquery(
+                Payment.objects.filter(
+                    amount=OuterRef('amount'),
+                    date=OuterRef('date')
+                ).values('invoice')[:1]
+            )
+        )
+
+        context = {
+            'balance': balance.amount,
+            'total_sales': total_sales['total_sales'] or 0,
+            'total_expenses': total_expenses['total_expenses'] or 0,
+            'profit': profit,
+            'sales_transactions': sales_transactions,
+            'expenses_transactions': expenses_transactions,
+            'total_payment': total_payment['total_payment'] or 0,
+            'payment_transactions': payment_transactions,
         }
 
         return render(request, self.template_name, context)
