@@ -3,7 +3,7 @@
 
 {% block content %}
 {% load humanize %}
-{% if user.is_authenticated and user.is_staff and user.is_superuser %}
+{% if user.is_authenticated  %}
 
 <div class="container">
     {% include 'topside.html' %}

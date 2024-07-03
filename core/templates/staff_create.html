@@ -118,9 +118,9 @@ crispy_forms_tags %} {% block content %}
               >Last Education</label
             >
             <div>
-              {{ form.last_education }} 
-              {% if form.last_education.errors %} 
-              {% for error in form.last_education.errors %}
+              {{ form.education }} 
+              {% if form.education.errors %} 
+              {% for error in form.education.errors %}
               <p class="text-danger">{{ error }}</p>
               {% endfor %} {% endif %}
             </div>
