@@ -29,6 +29,7 @@ MouseInfo
 mss
 numpy
 opencv-contrib-python
+pandas
 Pillow
 pipenv
 plotly
