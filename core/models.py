@@ -14,7 +14,10 @@ class ShopOwner(models.Model):
     tex_id = models.CharField(max_length=200)
     shop_location = models.CharField(max_length=200)
     address = models.CharField(max_length=200)
-    
+    owner_photo = models.ImageField(default='default.png',
+                                    upload_to='Owner_photo', null=True, blank=True)
+    shop_photo = models.ImageField(default='default.png',
+                              upload_to='shop_photo',null=True,blank=True)
     def __str__(self):
         return f'{self.shop_name}'
 

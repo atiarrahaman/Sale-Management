@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
-from .models import Staff
+from .models import Staff,ShopOwner
 from django.contrib.auth.models import User
 
 
@@ -20,6 +20,8 @@ class StaffCreationForm(UserCreationForm):
         attrs={'class': 'form-control'}))
     phone = forms.CharField(widget=forms.TextInput(
         attrs={'class': 'form-control'}))
+    nid_no = forms.CharField(widget=forms.TextInput(
+        attrs={'class': 'form-control'}))
     education = forms.CharField(widget=forms.TextInput(
         attrs={'class': 'form-control'}))
     point = forms.CharField(widget=forms.TextInput(
@@ -32,7 +34,7 @@ class StaffCreationForm(UserCreationForm):
     class Meta(UserCreationForm.Meta):
         model = User
         fields = ('username', 'email', 'first_name', 'last_name', 'password1',
-                  'password2', 'address', 'phone', 'image', 'education', 'point', 'father_name', 'mother_name')
+                  'password2', 'address', 'phone', 'image', 'education','nid_no', 'point', 'father_name', 'mother_name')
         widgets = {
             'username': forms.TextInput(
                 attrs={'class': 'form-control'}),
@@ -48,7 +50,23 @@ class StaffCreationForm(UserCreationForm):
         }
 
 
-class ProfileUpdateForm(forms.ModelForm):
+class ShopOwnerUpdateForm(forms.ModelForm):
+    class Meta:
+        model = ShopOwner
+        fields = ('shop_name', 'phone', 'trade_license_no', 'owner_photo','shop_photo', 'tex_id', 'shop_location',
+                  'address')
+        widgets = {
+            
+            'shop_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'phone': forms.TextInput(attrs={'class': 'form-control'}),
+            'trade_license_no': forms.TextInput(attrs={'class': 'form-control'}),
+            'tex_id': forms.TextInput(attrs={'class': 'form-control'}),
+            'owner_photo': forms.FileInput(attrs={'class': 'form-control-file'}),
+            'shop_photo': forms.FileInput(attrs={'class': 'form-control-file'}),
+            'shop_location': forms.TextInput(attrs={'class': 'form-control'}),
+            'address': forms.TextInput(attrs={'class': 'form-control'}),
+        }
+class StaffUpdateForm(forms.ModelForm):
     class Meta:
         model = Staff
         fields = ('phone', 'image', 'address','education','point')
