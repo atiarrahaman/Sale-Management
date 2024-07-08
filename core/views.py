@@ -1,4 +1,4 @@
-from django.contrib.auth import login, logout
+from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.views import LoginView
 from django.urls import reverse_lazy
 from django.contrib import messages
@@ -6,18 +6,18 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.views import View
 from product.models import Product,Order
-from transaction.models import Expense
-from django.utils.decorators import method_decorator
 from django.db.models import Sum
 from datetime import datetime
 from django.contrib import messages
 from .forms import StaffCreationForm,ProfileUpdateForm
-from .models import Staff
+from .models import Staff,ShopOwner
 from .filters import StaffFilter
 from django.contrib.auth.models import User
 from django.contrib.auth.views import PasswordChangeView
 from product.models import Product, Order, OrderProduct
 from transaction.models import Transaction, Payment, Expense
+from django.http import HttpResponse
+from django.db.models import Q
 
 class StaffCreateView(View):
     form_class = StaffCreationForm
@@ -72,18 +72,44 @@ class ProfileUpdateView(View):
             return redirect('profile')
         return render(request, self.template_name, {'form': form})
 
-class UserLoginView(LoginView):
-    template_name = 'login.html'
 
-    def get_success_url(self):
-        if self.request.user.is_staff:
-            messages.success(self.request, "Welcome Admin ")
-            return reverse_lazy('admin_home')
-        else:
-            messages.success(
-                self.request, "Welcome! You are successfully logged in.")
-        return reverse_lazy('cart')
+def user_login(request):
+    if request.method == 'POST':
+        login_field = request.POST['login']
+        password = request.POST['password']
 
+        user = authenticate(request, username=login_field, password=password)
+        if user is None:
+            try:
+                user = User.objects.get(
+                    Q(username=login_field) | Q(email=login_field))
+                if not user.check_password(password):
+                    user = None
+            except User.DoesNotExist:
+                user = None
+
+        if user is not None:
+            login(request, user)
+
+            is_shop_owner = ShopOwner.objects.filter(user=user).exists()
+            is_employee = Staff.objects.filter(user=user).exists()
+            is_admin = user.is_staff  
+
+            if is_admin:
+               
+                return redirect('admin_dashboard')
+            elif is_shop_owner:
+                
+                return redirect('admin_home')
+            elif is_employee:
+                
+                return redirect('cart')
+            else:
+                return HttpResponse("User role not defined.", status=403)
+
+        return HttpResponse("Invalid credentials.", status=401)
+
+    return render(request, 'login.html')
 
 class AllStaffView(View):
     template_name = 'all_staff.html'

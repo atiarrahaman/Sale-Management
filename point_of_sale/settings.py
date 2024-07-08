@@ -81,7 +81,7 @@ DATABASES = {
     }
 }
 
-
+# LOGIN_URL = '/core/user_login/'
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
 
