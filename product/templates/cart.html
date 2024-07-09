@@ -2,20 +2,43 @@
 {% block title %}Cart and Order{% endblock %}
 {% load crispy_forms_tags %}
 {% load humanize %}
+
 {% block content %}
 
-<div class="container my-2">
+<div class=" my-2">
     <div class="row">
-        <div class="col-md-3">
+        <div class="col-md-4">
             <h2>Add Product</h2>
+            <div class="form-group">
+                <input type="text" id="product-search-input" class="form-control" placeholder="Search products...">
+                <div class="table-responsive" style="max-height: 265px; overflow-y: auto;"> <!-- Inline CSS for height and overflow -->
+                    <table class="table table-bordered mt-3">
+                        <thead>
+                            <tr>
+                                <th>Product Name</th>
+                                <th>BarCode</th>
+                                <th>Quantity</th>
+                            </tr>
+                        </thead>
+                        <tbody id="product-list">
+                            {% for product in products %}
+                            <tr data-id="{{ product.id }}" data-name="{{ product.name }}" data-barcode="{{ product.bar_code }}" data-quantity="{{ product.qty }}">
+                                <td>{{ product.name }}</td>
+                                <td>{{ product.bar_code }}</td>
+                                <td>{{ product.qty }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
             <form method="post" enctype="multipart/form-data" id="add-to-cart-form">
-                {% csrf_token %}
-                {{ form.product.label_tag }}
-                {{ form.product }}
-                <input type="hidden" name="quantity" value="1"> <!-- Default quantity -->
-                <input type="hidden" name="action" value="add_to_cart"> <!-- Action for adding to cart -->
-                <button type="submit" class="btn btn-primary mt-5">Add to Cart</button>
-            </form>
+    {% csrf_token %}
+    <input type="hidden" name="product" id="selected-product">
+    <input type="hidden" name="quantity" value="1"> <!-- Default quantity -->
+    <input type="hidden" name="action" value="add_to_cart">
+    <button type="submit" class="btn btn-primary mt-3">Add to Cart</button>
+</form>
             <hr>
             <h3>Customer Detail</h3>
             <form action="" method="post" id="orderForm" class="shadow-lg p-4 rounded-5">
@@ -25,8 +48,7 @@
                 <button class="btn btn-primary" type="submit">Confirm Order</button>
             </form>
         </div>
-        <div class="col-md-9">
-            <!-- Cart Products List -->
+        <div class="col-md-8">
             <h2>Cart Products</h2>
             <div class="table-responsive">
                 <table class="table table-bordered border-primary">
@@ -80,24 +102,37 @@
 {% block extrascripts %}
 <script>
     $(document).ready(function() {
-        // Handle form submission when Enter is pressed
-        $('#add-to-cart-form').submit(function(event) {
-            event.preventDefault(); // Prevent default form submission
-            var formData = $(this).serialize(); // Serialize form data
-            $.post("{% url 'cart_order' %}", formData)
-                .done(function(response) {
-                    // Handle success (if needed)
-                    console.log(response);
-                })
-                .fail(function(error) {
-                    // Handle errors (if needed)
-                    console.error(error);
-                });
+        // Filter products in the table based on search input
+        $('#product-search-input').on('input', function() {
+            var searchValue = $(this).val().toLowerCase();
+            $('#product-list tr').filter(function() {
+                $(this).toggle($(this).data('name').toLowerCase().indexOf(searchValue) > -1);
+            });
         });
 
-        // Handle Enter key press on select dropdown
-        $('select[name="product"]').change(function() {
-            $('#add-to-cart-form').submit(); // Submit the form when product is selected
+        // Select product from the table and highlight the selected row
+        $('#product-list').on('click', 'tr', function() {
+            var productId = $(this).data('id');
+            var productName = $(this).data('name');
+
+            console.log("Selected Product ID:", productId);
+            console.log("Selected Product Name:", productName);
+
+            $('#selected-product').val(productId); // Set selected product ID
+            $('#product-search-input').val(productName); // Display selected product name
+
+            // Highlight the selected row by resetting the background color for all rows and applying it to the clicked row
+            $('#product-list tr').css('background-color', ''); // Remove highlight from all rows
+            $(this).css('background-color', '#d9edf7'); // Add highlight to the clicked row
+
+            // Debugging: Check if #selected-product value is correctly set
+            console.log("Hidden Input Value:", $('#selected-product').val());
+        });
+
+        // Debugging: Check if form submits when 'Add to Cart' button clicked
+        $('#add-to-cart-form').submit(function(event) {
+            console.log("Form submitted!");
+            // Ensure event is not prevented
         });
     });
 </script>
