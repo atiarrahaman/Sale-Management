@@ -65,8 +65,8 @@ class CartProduct(models.Model):
 
 
 class Order(models.Model):
-    name = models.CharField(max_length=50)
-    phone = models.CharField(max_length=50)
+    name = models.CharField(max_length=50,null=True, blank=True)
+    phone = models.CharField(max_length=50, null=True, blank=True)
     total = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
 

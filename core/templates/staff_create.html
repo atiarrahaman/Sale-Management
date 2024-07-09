@@ -2,14 +2,14 @@
 crispy_forms_tags %} {% block content %}
 
 <div id="addStaff" >
-    <h1 class="text-center mt-4">Add Staff Information</h1>
+    <h2 class="text-center mt-2">Add Staff Information</h2>
 
     <div class="d-flex justify-content-center align-items-center mb-4">
       {% if form.non_field_errors %} 
       {% for error in form.non_field_errors %}
       <div class="alert alert-danger" role="alert">{{ error}}</div>
       {% endfor %} {% endif %}
-      <div class="col-md-6 shadow-lg mt-2 p-4 rounded-5">
+      <div class="col-md-8 shadow-lg mt-2 p-4 rounded-5">
         <form class="row g-3" method="POST" enctype="multipart/form-data">
           {% csrf_token %}
           <div class="col-md-6">
@@ -28,6 +28,20 @@ crispy_forms_tags %} {% block content %}
           </div>
           <div class="col-md-6">
             <label
+              for="{{ form.last_name.id_for_label }}"
+              class="form-label"
+              >Email</label
+            >
+            <div>
+              {{ form.email }} 
+              {% if form.email.errors %} 
+              {% for error in form.email.errors %}
+              <p class="text-danger">{{ error }}</p>
+              {% endfor %} {% endif %}
+            </div>
+          </div>
+          <div class="col-md-4">
+            <label
               for="{{ form.first_name.id_for_label }}"
               class="form-label"
               >First Name</label
@@ -40,7 +54,7 @@ crispy_forms_tags %} {% block content %}
               {% endfor %} {% endif %}
             </div>
           </div>
-          <div class="col-md-6">
+          <div class="col-md-4">
             <label
               for="{{ form.last_name.id_for_label }}"
               class="form-label"
@@ -54,19 +68,20 @@ crispy_forms_tags %} {% block content %}
               {% endfor %} {% endif %}
             </div>
           </div>
-          <div class="col-md-6">
+          <div class="col-md-4">
             <label
-              for="{{ form.last_name.id_for_label }}"
+              for="{{ form.phone.id_for_label }}"
               class="form-label"
-              >Email</label
+              >Contact Number</label
             >
             <div>
-              {{ form.email }} 
-              {% if form.email.errors %} 
-              {% for error in form.email.errors %}
+              {{ form.phone }} 
+              {% if form.phone.errors %} 
+              {% for error in form.phone.errors %}
               <p class="text-danger">{{ error }}</p>
               {% endfor %} {% endif %}
             </div>
+
           </div>
           <div class="col-md-4">
             <label
@@ -96,20 +111,20 @@ crispy_forms_tags %} {% block content %}
               {% endfor %} {% endif %}
             </div>
           </div>
+          
           <div class="col-md-4">
             <label
-              for="{{ form.phone.id_for_label }}"
+              for="{{ form.nid_no.id_for_label }}"
               class="form-label"
-              >Contact Number</label
+              >NID No</label
             >
             <div>
-              {{ form.phone }} 
-              {% if form.phone.errors %} 
-              {% for error in form.phone.errors %}
+              {{ form.nid_no }} 
+              {% if form.nid_no.errors %} 
+              {% for error in form.nid_no.errors %}
               <p class="text-danger">{{ error }}</p>
               {% endfor %} {% endif %}
             </div>
-
           </div>
           <div class="col-md-4">
             <label

@@ -1,4 +1,4 @@
-from django.contrib.auth import login, logout
+from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.views import LoginView
 from django.urls import reverse_lazy
 from django.contrib import messages
@@ -6,18 +6,32 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.views import View
 from product.models import Product,Order
-from transaction.models import Expense
-from django.utils.decorators import method_decorator
 from django.db.models import Sum
 from datetime import datetime
 from django.contrib import messages
-from .forms import StaffCreationForm,ProfileUpdateForm
-from .models import Staff
+from .forms import StaffCreationForm, ShopOwnerUpdateForm, StaffUpdateForm
+from .models import Staff,ShopOwner
 from .filters import StaffFilter
 from django.contrib.auth.models import User
 from django.contrib.auth.views import PasswordChangeView
 from product.models import Product, Order, OrderProduct
 from transaction.models import Transaction, Payment, Expense
+from django.http import HttpResponse
+from django.db.models import Q
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views.decorators.csrf import csrf_protect
+from django.utils.decorators import method_decorator
+
+# class ShopOwnerRequiredMixin(LoginRequiredMixin):
+#     @method_decorator(csrf_protect)
+#     def dispatch(self, request, *args, **kwargs):
+#         if not ShopOwner.objects.filter(user=request.user).exists():
+#             # Use messages to pass a flag to the template
+#             messages.error(request, 'Protected. You are not a shop owner.')
+#             # Redirect to the same page or another appropriate page
+#             return redirect(request.path)
+#         return super().dispatch(request, *args, **kwargs)
+
 
 class StaffCreateView(View):
     form_class = StaffCreationForm
@@ -34,64 +48,128 @@ class StaffCreateView(View):
             user.save()
             staff = Staff.objects.create(
                 user=user,
+                # Assign the logged-in ShopOwner
+                shop=ShopOwner.objects.get(user=request.user),
                 address=form.cleaned_data['address'],
                 phone=form.cleaned_data['phone'],
+                nid_no=form.cleaned_data['nid_no'],
+                father_name=form.cleaned_data['father_name'],
+                mother_name=form.cleaned_data['mother_name'],
+                education=form.cleaned_data['education'],
+                point=form.cleaned_data['point'],
                 image=form.cleaned_data['image']
             )
             messages.success(request, 'User and Staff created successfully.')
-            
-            return redirect('add_staff')
+            return redirect('all_staff')
         else:
             messages.error(request, 'Error creating user and staff.')
         return render(request, self.template_name, {'form': form})
 
-class StaffProfile(View):
-    template_name='staff_profile.html'
+
+class ProfileView(View):
+    shop_owner_template = 'shop_owner_profile.html'
+    staff_template = 'staff_profile.html'
+
     def get(self, request):
-        profile=Staff.objects.get(user=request.user)
+        
+        if ShopOwner.objects.filter(user=request.user).exists():
+            profile = ShopOwner.objects.get(user=request.user)
+            template = self.shop_owner_template
+        elif Staff.objects.filter(user=request.user).exists():
+            profile = Staff.objects.get(user=request.user)
+            template = self.staff_template
+
         context = {
             'profile': profile,
         }
-        return render(request, self.template_name, context)
+        return render(request, template, context)
 
 
 class ProfileUpdateView(View):
-    template_name = 'update_profile.html'
+    shop_owner_template = 'update_shop_owner_profile.html'
+    staff_template = 'update_staff_profile.html'
 
     def get(self, request):
-        staff_instance = Staff.objects.get(user=request.user)
-        form = ProfileUpdateForm(instance=staff_instance)
-        return render(request, self.template_name, {'form': form})
+        if ShopOwner.objects.filter(user=request.user).exists():
+            profile_instance = ShopOwner.objects.get(user=request.user)
+            form = ShopOwnerUpdateForm(instance=profile_instance)
+            template = self.shop_owner_template
+        elif Staff.objects.filter(user=request.user).exists():
+            profile_instance = Staff.objects.get(user=request.user)
+            form = StaffUpdateForm(instance=profile_instance)
+            template = self.staff_template
+        else:
+            return redirect('some_error_page')
+
+        return render(request, template, {'form': form})
 
     def post(self, request):
-        staff_instance = Staff.objects.get(user=request.user)
-        form = ProfileUpdateForm(
-            request.POST, request.FILES, instance=staff_instance)
+        if ShopOwner.objects.filter(user=request.user).exists():
+            profile_instance = ShopOwner.objects.get(user=request.user)
+            form = ShopOwnerUpdateForm(request.POST, instance=profile_instance)
+            template = self.shop_owner_template
+        elif Staff.objects.filter(user=request.user).exists():
+            profile_instance = Staff.objects.get(user=request.user)
+            form = StaffUpdateForm(
+                request.POST, request.FILES, instance=profile_instance)
+            template = self.staff_template
+        else:
+            return redirect('some_error_page')
+
         if form.is_valid():
             form.save()
             return redirect('profile')
-        return render(request, self.template_name, {'form': form})
 
-class UserLoginView(LoginView):
-    template_name = 'login.html'
+        return render(request, template, {'form': form})
 
-    def get_success_url(self):
-        if self.request.user.is_staff:
-            messages.success(self.request, "Welcome Admin ")
-            return reverse_lazy('admin_home')
-        else:
-            messages.success(
-                self.request, "Welcome! You are successfully logged in.")
-        return reverse_lazy('cart')
+
+def user_login(request):
+    if request.method == 'POST':
+        login_field = request.POST['login']
+        password = request.POST['password']
+
+        user = authenticate(request, username=login_field, password=password)
+        if user is None:
+            try:
+                user = User.objects.get(
+                    Q(username=login_field) | Q(email=login_field))
+                if not user.check_password(password):
+                    user = None
+            except User.DoesNotExist:
+                user = None
+
+        if user is not None:
+            login(request, user)
+
+            is_shop_owner = ShopOwner.objects.filter(user=user).exists()
+            is_employee = Staff.objects.filter(user=user).exists()
+            is_admin = user.is_staff  
+
+            if is_admin:
+               
+                return redirect('admin_dashboard')
+            elif is_shop_owner:
+                
+                return redirect('admin_home')
+            elif is_employee:
+                
+                return redirect('cart')
+            else:
+                return HttpResponse("User role not defined.", status=403)
+
+        return HttpResponse("Invalid credentials.", status=401)
+
+    return render(request, 'login.html')
 
 
 class AllStaffView(View):
     template_name = 'all_staff.html'
 
     def get(self, request):
-        all_staff = User.objects.filter(is_superuser=False)
+        # Filter users based on the existence of a related Staff entry
+        all_staff = User.objects.filter(staff__isnull=False)
         myfilter = StaffFilter(request.GET, queryset=all_staff)
-        staff=myfilter.qs
+        staff = myfilter.qs
         context = {
             'myfilter': myfilter,
             'staff': staff
