@@ -88,8 +88,7 @@ soupsieve==2.4.1
 sqlparse==0.4.3
 stripe==8.0.0
 tenacity==8.4.2
-Twisted==24.3.0
-twisted-iocpsupport==1.0.4
+
 txaio==23.1.1
 typing_extensions==4.5.0
 tzdata==2023.3
