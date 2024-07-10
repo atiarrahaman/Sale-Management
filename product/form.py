@@ -1,6 +1,8 @@
 from django import forms
 from .models import Product, CartProduct, Order, ReturnProduct
 from inventory .models import Category, Supplier
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Layout, Field
 # Product Form
 class ProductForm(forms.ModelForm):
     name = forms.CharField(widget=forms.TextInput(
@@ -41,12 +43,28 @@ class CartProductForm(forms.ModelForm):
     class Meta:
         model=CartProduct
         fields = ['id', 'product','quantity']
+    
 
 
 class OrderForm(forms.ModelForm):
     class Meta:
         model = Order
         fields = ['name', 'phone']
+
+    def __init__(self, *args, **kwargs):
+        super(OrderForm, self).__init__(*args, **kwargs)
+        self.fields['name'].label = ''
+        self.fields['name'].widget.attrs.update({'placeholder': 'Customer Name'})
+        
+        self.fields['phone'].label = ''
+        self.fields['phone'].widget.attrs.update({'placeholder': 'Phone Number'})
+
+        self.helper = FormHelper()
+        self.helper.layout = Layout(
+            Field('customer_name'),
+            Field('phone'),
+            # Add more fields as needed
+        )
 
 
 class ReturnProductForm(forms.ModelForm):
