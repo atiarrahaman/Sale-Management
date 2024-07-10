@@ -210,7 +210,7 @@
                 // Scroll up
                 container.animate({ scrollTop: containerScrollTop + rowTop }, 200);
             } else if (rowTop < containerScrollTop) {
-                // Adjust scroll position if the row is above the visible area
+
                 container.animate({ scrollTop: containerScrollTop - (containerScrollTop - rowTop) }, 200);
             }
         }
@@ -222,16 +222,16 @@
                 $(this).closest('form').submit();
             }
         });
-        // Submit form on "Add to Cart" button click
+
         $('#add-to-cart-form').on('submit', function() {
-            // Ensure the selected product is included in the form submission
+
             updateSelectedProduct(selectedRow);
         });
     });
 </script>
 <style>
     .highlight {
-        background-color: #59c2f6 !important; /* Use !important to ensure it applies */
+        background-color: #59c2f6 !important;
     }
 </style>
 {% endblock %}
