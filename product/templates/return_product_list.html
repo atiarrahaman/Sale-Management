@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="container">
+    <h1 class="text-center my-3">Returned Products</h1>
+    <div class="mb-3 bg-secondary py-2 d-flex justify-content-around text-white" >
+        <h3 >Total Return : {{total_return_quantity}}</h3>
+    <h3>Total Amount: {{total_return_price}}</h3>
+    
+    </div>
+    <table class="table table-bordered bold-table-border">
+      <thead class="thead-dark">
+        <tr>
+            <th>Date</th>
+          <th>Order</th>
+          <th>Customer</th>
+          <th>Product</th>
+          <th>Quantity</th>
+          <th>Reason</th>
+          <th>Subtotal</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for return_product in return_products %}
+          <tr>
+            <td>{{ return_product.return_date }}</td>
+            <td>{{ return_product.order_product.order.id }}</td>
+            <td>{{ return_product.order_product.order.name }}</td>
+            <td>{{ return_product.order_product.product.name }}</td>
+            <td>{{ return_product.return_quantity }}</td>
+            <td>{{ return_product.return_reason }}</td>
+            <td>{{ return_product.subtotal }}</td>
+            
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

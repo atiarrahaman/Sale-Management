@@ -1,0 +1,472 @@
+{% extends 'base.html' %} {% block title %}Inventory{% endblock %} {% load
+crispy_forms_tags %} {% block content %}
+<!-- Category Form  -->
+<div class="container">
+  <div>
+    <button id="toggleAddSupplier" class="btn btn-primary mt-4 mx-2 active">
+      Add Supplier
+    </button>
+    <button id="toggleAddCategory" class="btn btn-secondary mt-4 mx-2">
+      Add Category
+    </button>
+    <button id="toggleAddProduct" class="btn btn-info mt-4 mx-2">
+      Add Product
+    </button>
+  </div>
+
+  <div id="addCategory" style="display: none">
+    <h1 class="text-center mt-4">Add New Category</h1>
+    <div class="d-flex justify-content-center align-items-center">
+      {% if category_form.non_field_errors %} 
+      {% for error in category_form.non_field_errors %}
+      <div class="alert alert-danger" role="alert">{{ error}}</div>
+      {% endfor %} {% endif %}
+      <div class="col-md-4 shadow-lg mt-5 p-4 rounded-5">
+        <form class="row g-3" method="POST" enctype="multipart/form-data">
+          {% csrf_token %}
+          <div class="col-md-12">
+            <label
+              for="{{ category_form.name.id_for_label }}"
+              class="form-label"
+              >Category Name</label
+            >
+            <div>
+              {{ category_form.name }} 
+              {% if category_form.name.errors %} 
+              {% for error in category_form.name.errors %}
+              <p class="text-danger">{{ error }}</p>
+              {% endfor %} {% endif %}
+            </div>
+          </div>
+          <div class="col-md-6 my-3 mx-auto">
+            <div class="mx-auto d-block">
+              <button
+                class="btn btn-primary"
+                type="submit"
+                name="category_submit"
+              >
+                Submit
+              </button>
+              <button class="btn btn-primary" type="reset">Reset</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <!-- supplier form   -->
+   <div id="addSupplier">
+  <div class="row">
+    
+        <div class="col-md-6">
+    <h1 class="text-center mt-4">Add Supplier Information</h1>
+    <div class="d-flex justify-content-center align-items-center">
+        {% if supplier_form.non_field_errors %} 
+            {% for error in supplier_form.non_field_errors %}
+                <div class="alert alert-danger" role="alert">{{ error }}</div>
+            {% endfor %}
+        {% endif %}
+        <div class="col-md-12 shadow-lg mt-5 p-4 rounded-5">
+            <form class="row g-3" method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" id="supplier_id" name="supplier_id">
+                <div class="col-md-6">
+                    <label for="{{ supplier_form.name.id_for_label }}" class="form-label">Supplier Name</label>
+                    <div>
+                        {{ supplier_form.name }} 
+                        {% if supplier_form.name.errors %} 
+                            {% for error in supplier_form.name.errors %}
+                                <p class="text-danger">{{ error }}</p>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <label for="{{ supplier_form.phone.id_for_label }}" class="form-label">Contact Number</label>
+                    <div>
+                        {{ supplier_form.phone }} 
+                        {% if supplier_form.phone.errors %} 
+                            {% for error in supplier_form.phone.errors %}
+                                <p class="text-danger">{{ error }}</p>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <label for="{{ supplier_form.tax_id.id_for_label }}" class="form-label">Tax Id</label>
+                    <div>
+                        {{ supplier_form.tax_id }} 
+                        {% if supplier_form.tax_id.errors %} 
+                            {% for error in supplier_form.tax_id.errors %}
+                                <p class="text-danger">{{ error }}</p>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <label for="{{ supplier_form.address.id_for_label }}" class="form-label">Contact Address</label>
+                    <div>
+                        {{ supplier_form.address }}
+                        {% if supplier_form.address.errors %}
+                            {% for error in supplier_form.address.errors %}
+                                <p class="text-danger">{{ error }}</p>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-6 my-3 mx-auto">
+                    <div class="mx-auto d-block">
+                        <button class="btn btn-primary" type="submit" name="supplier_submit">Submit</button>
+                        <button class="btn btn-primary" type="reset">Reset</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+        <div class="col-md-6">
+            <div id="Supplier_Table">
+              <h1 class="text-center mt-4">Suppliers</h1>
+            <table class="table table-bordered mt-5">
+                <thead>
+                    <tr>
+                        <th>Supplier Name</th>
+                        <th>Contact Number</th>
+                        <th>Tax Id</th>
+                        <th>Contact Address</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for supplier in suppliers %}
+                        <tr>
+                            <td><a href="#" class="edit-supplier" data-id="{{ supplier.id }}" data-name="{{ supplier.name }}" data-phone="{{ supplier.phone }}" data-tax_id="{{ supplier.tax_id }}" data-address="{{ supplier.address }}">{{ supplier.name }}</a></td>
+                            <td>{{ supplier.phone }}</td>
+                            <td>{{ supplier.tax_id }}</td>
+                            <td>{{ supplier.address }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            </div>
+        </div>
+        </div>
+    </div>
+
+  <!-- product form  -->
+  <div id="addProduct">
+    <div class="d-flex flex-row justify-content-center align-item-center gap-4">
+      <div class="col-md-6">
+        <h1 class="text-center mt-4 mb-0">Add New Product</h1>
+        <div class="d-flex justify-content-center align-items-center">
+          {% if product_form.non_field_errors %} 
+          {% for error in product_form.non_field_errors %}
+          <div class="alert alert-danger" role="alert">{{ error}}</div>
+          {% endfor %} {% endif %}
+          <div class="col-md-12 shadow-lg mt-2 p-4 rounded-5">
+            <form class="row g-3" method="POST" enctype="multipart/form-data">
+              {% csrf_token %}
+              <div class="col-md-4">
+                <label
+                  for="{{ product_form.name.id_for_label }}"
+                  class="form-label"
+                  >Product Name</label
+                >
+                <div>
+                  {{ product_form.name }} 
+                  {% if product_form.name.errors %} 
+                  {% for error in product_form.name.errors %}
+                  <p class="text-danger">{{ error }}</p>
+                  {% endfor %} {% endif %}
+                </div>
+              </div>
+              <div class="col-md-4">
+                <label
+                  for="{{ product_form.qty.id_for_label }}"
+                  class="form-label"
+                  >Product Quantity</label
+                >
+                <div>
+                  {{ product_form.qty }} 
+                  {% if product_form.qty.errors %} 
+                  {% for error in product_form.qty.errors %}
+                  <p class="text-danger">{{ error }}</p>
+                  {% endfor %} {% endif %}
+                </div>
+              </div>
+              <div class="col-md-4">
+                <label
+                  for="{{ product_form.unit.id_for_label }}"
+                  class="form-label"
+                  >Unit</label
+                >
+                <div>
+                  {{ product_form.unit }} 
+                  {% if product_form.unit.errors %} 
+                  {% for error in product_form.unit.errors %}
+                  <p class="text-danger">{{ error }}</p>
+                  {% endfor %} {% endif %}
+                </div>
+              </div>
+              <div class="col-md-4">
+                <label
+                  for="{{ product_form.sell_price.id_for_label }}"
+                  class="form-label"
+                  >Product Buy Price</label
+                >
+                <div>
+                  {{ product_form.buy_price }} 
+                  {% if product_form.buy_price.errors %} 
+                  {% for error in product_form.buy_price.errors %}
+                  <p class="text-danger">{{ error }}</p>
+                  {% endfor %} {% endif %}
+                </div>
+              </div>
+              <div class="col-md-4">
+                <label
+                  for="{{ product_form.sell_price.id_for_label }}"
+                  class="form-label"
+                  >Product Sell Price</label
+                >
+                <div>
+                  {{ product_form.sell_price }} 
+                  {% if product_form.sell_price.errors %} 
+                  {% for error in product_form.sell_price.errors %}
+                  <p class="text-danger">{{ error }}</p>
+                  {% endfor %} {% endif %}
+                </div>
+              </div>
+              <div class="col-md-4">
+                <label
+                  for="{{ product_form.category.id_for_label }}"
+                  class="form-label"
+                  >Product Category</label
+                >
+                <div>
+                  {{ product_form.category }} 
+                  {% if product_form.category.errors %} {% for error in product_form.category.errors %}
+                  <p class="text-danger">{{ error }}</p>
+                  {% endfor %} {% endif %}
+                </div>
+              </div>
+              <div class="col-md-4">
+                <label
+                  for="{{ product_form.supplier.id_for_label }}"
+                  class="form-label"
+                  >Product Supplier</label
+                >
+                <div>
+                  {{ product_form.supplier }} 
+                  {% if product_form.supplier.errors %} {% for error in product_form.supplier.errors %}
+                  <p class="text-danger">{{ error }}</p>
+                  {% endfor %} {% endif %}
+                </div>
+              </div>
+              <div class="col-md-4">
+                <label
+                  for="{{ product_form.image.id_for_label }}"
+                  class="form-label"
+                  >Product Photo</label
+                >
+                <div class="input-group">
+                  <input
+                    type="file"
+                    class="form-control"
+                    id="{{ product_form.image.id_for_label }}"
+                    name="{{ product_form.image.name }}"
+                  />
+                  {% if product_form.image.value %}
+                  <img
+                    src="{{ product_form.image.value.url }}"
+                    alt="Current Image"
+                    class="img-fluid rounded mt-2"
+                    style="max-height: 150px"
+                  />
+                  {% endif %}
+                </div>
+                {% if product_form.image.errors %} 
+                {% for error in product_form.image.errors %}
+                <p class="text-danger">{{ error }}</p>
+                {% endfor %} {% endif %}
+              </div>
+
+              <div class="col-md-4">
+                <label
+                  for="{{ product_form.qr_image.id_for_label }}"
+                  class="form-label"
+                  >QR Code Image</label
+                >
+                <div class="input-group">
+                  <input
+                    type="file"
+                    class="form-control"
+                    id="{{ product_form.qr_image.id_for_label }}"
+                    name="{{ product_form.qr_image.name }}"
+                  />
+                  {% if product_form.qr_image.value %}
+                  <img
+                    src="{{ product_form.qr_image.value.url }}"
+                    alt="Current Image"
+                    class="img-fluid rounded mt-2"
+                    style="max-height: 150px"
+                  />
+                  {% endif %}
+                </div>
+                {% if product_form.qr_image.errors %} {% for error in product_form.qr_image.errors %}
+                <p class="text-danger">{{ error }}</p>
+                {% endfor %} {% endif %}
+              </div>
+              <div class="col-md-4 ml-5">
+                <label class="form-check-label">
+                  {{ product_form.is_active }} Active
+                </label>
+                {% if product_form.is_active.errors %} {% for error in product_form.is_active.errors %}
+                <p class="text-danger">{{ error }}</p>
+                {% endfor %} {% endif %}
+              </div>
+
+              <div class="col-md-12 my-3">
+                <div class="col-4 mx-auto d-block">
+                  <button
+                    class="btn btn-primary"
+                    type="submit"
+                    name="product_submit"
+                  >
+                    Submit
+                  </button>
+                  <button class="btn btn-primary" type="reset">Reset</button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <!-- Cart Products List -->
+        <h2>Inventory Products</h2>
+        <div class="table-responsive">
+          <table class="table table-bordered border-primary">
+            <thead>
+              <tr>
+                <th>Product Name</th>
+                <th>Buy Price</th>
+                <th>Sell Price</th>
+                <th>Quantity</th>
+                <th>Subtotal</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for product in inventory_products %}
+              <tr>
+                <td>{{ product.name }}</td>
+                <td>{{ product.buy_price }}</td>
+                <td>{{ product.sell_price }}</td>
+                <td>{{ product.qty }} {{ product.unit }}</td>
+                <td>{{product.subtotal}}</td>
+                <td>
+                  <a href="{% url 'manage-inventory' product.id %}?action=rmv" class="btn btn-danger">X</a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          <form action="" method="post">
+            {% csrf_token %}
+            <button type="submit" name="add_inventory" class="btn btn-primary">
+              Add Inventory
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    var addSupplier = document.getElementById("addSupplier");
+    var addCategory = document.getElementById("addCategory");
+    var addProduct = document.getElementById("addProduct");
+
+    // Function to toggle display of addSupplier
+    function toggleAddSupplier() {
+        addProduct.style.display = "none";
+        addCategory.style.display = "none";
+        addSupplier.style.display = addSupplier.style.display === "none" ? "block" : "none";
+    }
+
+    // Function to toggle display of addCategory
+    function toggleAddCategory() {
+        addProduct.style.display = "none";
+        addSupplier.style.display = "none";
+        addCategory.style.display = addCategory.style.display === "none" ? "block" : "none";
+    }
+
+    // Function to toggle display of addProduct
+    function toggleAddProduct() {
+        addSupplier.style.display = "none";
+        addCategory.style.display = "none";
+        addProduct.style.display = addProduct.style.display === "none" ? "block" : "none";
+    }
+
+    // Event listeners for toggle buttons
+    document.getElementById("toggleAddSupplier").addEventListener("click", toggleAddSupplier);
+    document.getElementById("toggleAddCategory").addEventListener("click", toggleAddCategory);
+    document.getElementById("toggleAddProduct").addEventListener("click", toggleAddProduct);
+
+    // Double click event listeners for toggles to hide respective sections
+    document.getElementById("toggleAddSupplier").addEventListener("dblclick", function () {
+        if (Date.now() - lastClickTime < delay) {
+            addSupplier.style.display = "none";
+            lastClickTime = 0;
+        } else {
+            lastClickTime = Date.now();
+        }
+    });
+
+    document.getElementById("toggleAddCategory").addEventListener("dblclick", function () {
+        if (Date.now() - lastClickTime < delay) {
+            addCategory.style.display = "none";
+            lastClickTime = 0;
+        } else {
+            lastClickTime = Date.now();
+        }
+    });
+
+    document.getElementById("toggleAddProduct").addEventListener("dblclick", function () {
+        if (Date.now() - lastClickTime < delay) {
+            addProduct.style.display = "none";
+            lastClickTime = 0;
+        } else {
+            lastClickTime = Date.now();
+        }
+    });
+
+    // Variables for double click handling
+    var lastClickTime = 0;
+    var delay = 300; // milliseconds
+
+    // Edit supplier functionality
+    document.addEventListener("DOMContentLoaded", function() {
+    document.querySelectorAll(".edit-supplier").forEach(function(element) {
+        element.addEventListener("click", function(event) {
+            event.preventDefault();
+            document.getElementById("supplier_id").value = this.dataset.id;
+            document.getElementById("id_name").value = this.dataset.name;  // Ensure this matches the input field ID
+            document.getElementById("id_phone").value = this.dataset.phone;
+            document.getElementById("id_tax_id").value = this.dataset.tax_id;
+            document.getElementById("id_address").value = this.dataset.address;
+
+            addProduct.style.display = "none";
+            addCategory.style.display = "none";
+            addSupplier.style.display = "block";
+
+            document.getElementById("addSupplier").scrollIntoView();
+        });
+    });
+});
+
+</script>
+
+  {% endblock content %}
+</div>

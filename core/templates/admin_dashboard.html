@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+{% block title %}Admin Home Page{% endblock %}
+
+{% block content %}
+{% load humanize %}
+{% if user  %}
+
+<div class="container">
+    {% include 'topside.html' %}
+    
+    <div>
+
+    <div class="chart-select">
+        <label for="chartType">Chart Type:</label>
+        <select id="chartType" onchange="updateChart()">
+            <option value="waterfall">Waterfall Chart</option>
+            <option value="bar">Bar Chart</option>
+            <option value="pie">Pie Chart</option>
+            <option value="gantt">Gantt Chart</option>
+            <option value="flowchart">Flowchart</option>
+            <option value="radar">Radar Chart</option>
+        </select>
+    </div>
+
+    <div id="chartContainer"></div>
+
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script>
+        function updateChart() {
+            var chartType = document.getElementById('chartType').value;
+            var chartContainer = document.getElementById('chartContainer');
+
+            // Clear previous chart
+            chartContainer.innerHTML = '';
+
+            // Fetch data from Django context (this can be dynamic data from the backend)
+            var data = {
+                product_count: {{ product_count }},
+                order_count: {{ order_count }},
+                orderProduct_count: {{ orderProduct_count }},
+                transaction_count: {{ transaction_count }}
+            };
+
+            // Define chart data and layout based on selected chart type
+            var chartData, layout;
+
+            if (chartType === 'waterfall') {
+                chartData = [{
+                    type: 'waterfall',
+                    x: ['Products', 'Orders', 'Order Products', 'Transactions'],
+                    y: [data.product_count, data.order_count, data.orderProduct_count, data.transaction_count],
+                    decreasing: {marker: {color: 'Maroon', line: {color: 'red', width: 2}}},
+                    increasing: {marker: {color: 'Teal'}},
+                    totals: {marker: {color: 'DeepSkyBlue', line: {color: 'blue', width: 3}}}
+                }];
+                layout = { title: 'Waterfall Chart' };
+            } else if (chartType === 'bar') {
+                chartData = [{
+                    x: ['Products', 'Orders', 'Order Products', 'Transactions'],
+                    y: [data.product_count, data.order_count, data.orderProduct_count, data.transaction_count],
+                    type: 'bar'
+                }];
+                layout = { title: 'Bar Chart' };
+            } else if (chartType === 'pie') {
+                chartData = [{
+                    labels: ['Products', 'Orders', 'Order Products', 'Transactions'],
+                    values: [data.product_count, data.order_count, data.orderProduct_count, data.transaction_count],
+                    type: 'pie'
+                }];
+                layout = { title: 'Pie Chart' };
+            } else if (chartType === 'gantt') {
+                chartData = [{
+                    type: 'bar',
+                    x: [data.product_count, data.order_count, data.orderProduct_count, data.transaction_count],
+                    y: ['Products', 'Orders', 'Order Products', 'Transactions'],
+                    orientation: 'h'
+                }];
+                layout = { title: 'Gantt Chart' };
+            } else if (chartType === 'flowchart') {
+                chartData = [{
+                    type: 'sankey',
+                    orientation: 'h',
+                    node: {
+                        pad: 15,
+                        thickness: 30,
+                        line: {color: 'black', width: 0.5},
+                        label: ['Products', 'Orders', 'Order Products', 'Transactions']
+                    },
+                    link: {
+                        source: [0, 0, 1, 2],
+                        target: [1, 2, 2, 3],
+                        value: [data.product_count, data.order_count, data.orderProduct_count, data.transaction_count]
+                    }
+                }];
+                layout = { title: 'Flowchart' };
+            } else if (chartType === 'radar') {
+                chartData = [{
+                    type: 'scatterpolar',
+                    r: [data.product_count, data.order_count, data.orderProduct_count, data.transaction_count],
+                    theta: ['Products', 'Orders', 'Order Products', 'Transactions'],
+                    fill: 'toself'
+                }];
+                layout = { title: 'Radar Chart' };
+            }
+
+            // Render the selected chart
+            Plotly.newPlot(chartContainer, chartData, layout);
+        }
+
+        // Initialize with the default chart type (Waterfall Chart)
+        updateChart();
+    </script>
+</div>
+
+</div>
+{% else %}
+
+{% endif %}
+
+{% endblock %}

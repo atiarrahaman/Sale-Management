@@ -1,7 +1,7 @@
 from django.contrib import admin
-from .models import Exprensive,Deposite,Withdraw
-# Register your models here.
+from .models import *
 
-admin.site.register(Exprensive)
-admin.site.register(Deposite)
-admin.site.register(Withdraw)
+admin.site.register(Transaction)
+admin.site.register(Payment)
+admin.site.register(Balance)
+admin.site.register(Expense)

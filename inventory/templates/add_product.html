@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% block title %}Add Product{% endblock %}
+{% load crispy_forms_tags %}
+{% block content %}
+<div class="container">
+  <h1 class="text-center mt-4">Add New Product</h1>
+  
+  <!-- Search Form -->
+  <div class="d-flex justify-content-center align-items-center">
+    <div class="col-md-8 shadow-lg mt-5 p-4 rounded-5">
+      <form method="POST" id="search-form">
+        {% csrf_token %}
+        <div class="input-group mb-3">
+          <input type="text" class="form-control" id="search-product" name="search_product" placeholder="Search Product by Bar Code or Name">
+          <button class="btn btn-outline-secondary" type="submit" id="search-btn">Search</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Product Form -->
+  <div class="d-flex justify-content-center align-items-center">
+    <div class="col-md-8 shadow-lg mt-5 p-4 rounded-5">
+      <form method="POST" enctype="multipart/form-data" id="product-form">
+        {% csrf_token %}
+        {{ product_form|crispy }}
+        <button class="btn btn-primary" type="submit">Submit</button>
+      </form>
+    </div>
+  </div>
+  
+  <!-- Inventory Products Table -->
+  <div class="mt-5">
+    <h2>Inventory Products</h2>
+    <table class="table table-bordered">
+      <thead>
+        <tr>
+          <th>Product Name</th>
+          <th>Buy Price</th>
+          <th>Sell Price</th>
+          <th>Quantity</th>
+          <th>Unit</th>
+          <th>Subtotal</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for product in inventory_products %}
+        <tr>
+          <td>{{ product.name }}</td>
+          <td>{{ product.buy_price }}</td>
+          <td>{{ product.sell_price }}</td>
+          <td>{{ product.qty }}</td>
+          <td>{{ product.unit }}</td>
+          <td>{{ product.subtotal }}</td>
+          <td>
+            <a href="{% url 'manage-inventory' product.id %}?action=rmv" class="btn btn-danger">X</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+<script>
+  document.getElementById('search-form').addEventListener('submit', function(event) {
+    event.preventDefault();
+    var searchValue = document.getElementById('search-product').value;
+    if (searchValue) {
+      var form = document.createElement('form');
+      form.method = 'POST';
+      form.style.display = 'none';
+      form.innerHTML = `
+        {% csrf_token %}
+        <input type="hidden" name="search_product" value="${searchValue}">
+      `;
+      document.body.appendChild(form);
+      form.submit();
+    }
+  });
+</script>
+{% endblock %}

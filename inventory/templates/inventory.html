@@ -1,0 +1,102 @@
+{% extends 'base.html' %} 
+{% block title %}Inventory{% endblock %} 
+{% load crispy_forms_tags %}
+{% block content %}
+<div class="container">
+    <div id="inventoryData" class="mt-5">
+        <form method="post" action="{% url 'inventory' %}" class="d-flex justify-content-center mb-4">
+            {% csrf_token %}
+            <div class="input-group">
+                <label for="start_date" class="input-group-text">From:</label>
+                <input type="date" class="form-control" id="start_date" name="start_date" />
+            </div>
+
+            <div class="input-group mx-2">
+                <label for="end_date" class="input-group-text">To:</label>
+                <input type="date" class="form-control" id="end_date" name="end_date" />
+            </div>
+
+            <div class="input-group mx-2">
+                <label for="product_name" class="input-group-text">Product:</label>
+                <input type="text" class="form-control" id="product_name" name="product_name" />
+            </div>
+
+            <div class="input-group mx-2">
+                <label for="category" class="input-group-text">Category:</label>
+                <select class="form-control" id="category" name="category">
+                    <option value="">All</option>
+                    {% for category in categories %}
+                    <option value="{{ category.id }}" {% if category.id == category_id %}selected{% endif %}>
+                        {{ category.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="input-group mx-2">
+                <label for="supplier" class="input-group-text">Supplier:</label>
+                <select class="form-control" id="supplier" name="supplier">
+                    <option value="">All</option>
+                    {% for supplier in suppliers %}
+                    <option value="{{ supplier.id }}" {% if supplier.id == supplier_id %}selected{% endif %}>
+                        {{ supplier.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="">
+                <button type="submit" class="btn btn-primary  px-4 fs-4">Filter</button>
+            </div>
+        </form>
+        <h3 class="mb-3 bg-secondary text-white py-2 text-center">Grand Total: {{ grand_total }}</h3>
+        <table class="table table-bordered bold-table-border">
+            <thead class="thead-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Date</th>
+                    <th>Total</th>
+                    <th>Products</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for inventory, product_data in inventory_data.items %}
+                <tr>
+                    <td>{{ inventory.id }}</td>
+                    <td>{{ inventory.date }}</td>
+                    <td>{{ inventory.total }}</td>
+                    <td>
+                        <table class="table table-bordered">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Category</th>
+                                    <th>Supplier Name</th>
+                                    <th>Quantity</th>
+                                    <th>Buy Price</th>
+                                    <th>Sell Price</th>
+                                    <th>Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in product_data %}
+                                <tr>
+                                    <td>{{ item.product.name }}</td>
+                                    <td>{{ item.product.category.name }}</td>
+                                    <td>{{ item.product.supplier.name }}</td>
+                                    <td>{{ item.product.qty }} {{ item.product.unit }}</td>
+                                    <td>{{ item.product.buy_price }}</td>
+                                    <td>{{ item.product.sell_price }}</td>
+                                    <td>{{ item.subtotal }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock content %}

@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+{% block title %}Orders{% endblock %}
+{% load crispy_forms_tags %}
+{% block content %}
+<div class="container">
+    <div id="orderData" class="mt-5">
+        <form method="post" action="{% url 'all_order' %}" class="d-flex justify-content-center mb-4">
+            {% csrf_token %}
+            <div class="input-group">
+                <label for="start_date" class="input-group-text">From:</label>
+                <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date }}" />
+            </div>
+            <div class="input-group mx-2">
+                <label for="end_date" class="input-group-text">To:</label>
+                <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date }}" />
+            </div>
+            <div class="input-group mx-2">
+                <label for="name" class="input-group-text">Name:</label>
+                <input type="text" class="form-control" id="name" name="name" value="{{ name }}" />
+            </div>
+            <div class="input-group mx-2">
+                <label for="phone" class="input-group-text">Phone:</label>
+                <input type="text" class="form-control" id="phone" name="phone" value="{{ phone }}" />
+            </div>
+            <div class="input-group mx-2">
+                <label for="product_name" class="input-group-text">Product:</label>
+                <input type="text" class="form-control" id="product_name" name="product_name" value="{{ product_name }}" />
+            </div>
+            <div class="">
+                <button type="submit" class="btn btn-primary px-4 fs-4">Filter</button>
+            </div>
+        </form>
+        <h3 class="mb-3 bg-secondary text-white py-2 text-center">Grand Total: {{ grand_total }}</h3>
+        <table class="table table-bordered bold-table-border">
+            <thead class="thead-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Phone</th>
+                    <th>Date</th>
+                    <th>Total</th>
+                    <th>Products</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order, order_details in order_data.items %}
+                <tr>
+                    <td>{{ order.id }}</td>
+                    <td>{{ order.name }}</td>
+                    <td>{{ order.phone }}</td>
+                    <td>{{ order.created_at }}</td>
+                    <td>{{ order.total }}</td>
+                    <td>
+                        <table class="table table-bordered">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Price</th>
+                                    <th>Quantity</th>
+                                    <th>Subtotal</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for order_product in order_details.products %}
+                                <tr>
+                                    <td>{{ order_product.product.name }}</td>
+                                    <td>{{ order_product.price }}</td>
+                                    <td>{{ order_product.quantity }}</td>
+                                    <td>{{ order_product.subtotal }}</td>
+                                    <td>
+                                        {% if order_details.returnable %}
+                                            {% if order_product.is_returned %}
+                                                <span class="text-danger">Returned</span>
+                                            {% else %}
+                                                <button type="button" class="btn btn-warning btn-sm return-button" data-toggle="modal" data-target="#returnProductModal" data-order-id="{{ order.id }}" data-order-product-id="{{ order_product.id }}" data-product-name="{{ order_product.product.name }}" data-quantity="{{ order_product.quantity }}" data-price="{{ order_product.price }}">
+                                                    Return
+                                                </button>
+                                            {% endif %}
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Return Product Modal -->
+<div class="modal fade" id="returnProductModal" tabindex="-1" role="dialog" aria-labelledby="returnProductModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="returnProductModalLabel">Return Product</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form method="post" action="{% url 'return_product' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    {% if form.errors %}
+                    <div class="alert alert-danger">
+                        <ul>
+                            {% for field, errors in form.errors.items %}
+                            {% for error in errors %}
+                            <li>{{ error }}</li>
+                            {% endfor %}
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                    <div class="form-group">
+                        <label for="order_id">Order ID</label>
+                        <input type="text" class="form-control" id="order_id" name="order_id" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="product_name_modal">Product Name</label>
+                        <input type="text" class="form-control" id="product_name_modal" name="product_name" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="return_quantity">Return Quantity</label>
+                        <input type="number" class="form-control" id="return_quantity" name="return_quantity" min="1">
+                    </div>
+                    <div class="form-group">
+                        <label for="price">Price</label>
+                        <input type="text" class="form-control" id="price" name="price" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="return_reason">Return Reason</label>
+                        <input type="textarea" class="form-control" id="return_reason" name="return_reason">
+                    </div>
+                    <div class="form-group">
+                        <label for="is_damage">Is Damaged?</label>
+                        <input type="checkbox" class="form-check-input" id="is_damage" name="is_damage">
+                    </div>
+                    <input type="hidden" id="order_product_id" name="order_product">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var returnButtons = document.querySelectorAll('.return-button');
+    var returnProductModal = document.getElementById('returnProductModal');
+    var orderIdInput = document.getElementById('order_id');
+    var productNameInput = document.getElementById('product_name_modal');  // Updated ID
+    var returnQuantityInput = document.getElementById('return_quantity');
+    var priceInput = document.getElementById('price');
+    var orderProductIdInput = document.getElementById('order_product_id');
+
+    returnButtons.forEach(function(button) {
+        button.addEventListener('click', function() {
+            var orderId = button.getAttribute('data-order-id');
+            var orderProductId = button.getAttribute('data-order-product-id');
+            var productName = button.getAttribute('data-product-name');
+            var quantity = button.getAttribute('data-quantity');
+            var price = button.getAttribute('data-price');
+
+            console.log("Order ID: " + orderId);
+            console.log("Order Product ID: " + orderProductId);
+            console.log("Product Name: " + productName);
+            console.log("Quantity: " + quantity);
+            console.log("Price: " + price);
+
+            orderIdInput.value = orderId;
+            productNameInput.value = productName;
+            returnQuantityInput.value = quantity;
+            priceInput.value = price;
+            orderProductIdInput.value = orderProductId;
+        });
+    });
+});
+</script>
+{% endblock content %}

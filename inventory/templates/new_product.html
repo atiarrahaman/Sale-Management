@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+{% block title %}Add Product{% endblock %}
+{% load crispy_forms_tags %}
+{% block content %}
+<div id="addProduct">
+    <div class="container">
+        <h1 class="text-center mt-4">Add New Product</h1>
+        
+        <!-- Display messages -->
+        <!-- {% if messages %}
+            <div class="alert alert-info" role="alert">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %} -->
+        
+        <!-- Search Form -->
+        <div class="d-flex justify-content-center align-items-center">
+            <div class="col-md-8 shadow-lg mt-5 p-4 rounded-5">
+                <form method="POST" id="search-form">
+                    {% csrf_token %}
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control" id="search-product" name="search_product" placeholder="Search Product by ID or Name">
+                        <button class="btn btn-outline-secondary" type="submit" id="search-btn">Search</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Product Form -->
+        <div class="d-flex justify-content-center align-items-center">
+            <div class="col-md-8 shadow-lg mt-5 p-4 rounded-5">
+                <div class="d-flex justify-content-center align-items-center">
+                    {% if product_form.non_field_errors %} 
+                        {% for error in product_form.non_field_errors %}
+                            <div class="alert alert-danger" role="alert">{{ error }}</div>
+                        {% endfor %} 
+                    {% endif %}
+                </div>
+                <form class="row g-3" method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    {% if product_id %}
+                        <input type="hidden" name="product_id" value="{{ product_id }}">
+                    {% endif %}
+                    
+                    <div class="col-md-4">
+                        <label for="{{ product_form.bar_code.id_for_label }}" class="form-label">Bar Code</label>
+                        <div>
+                            {{ product_form.bar_code }} 
+                            {% if product_form.bar_code.errors %} 
+                                {% for error in product_form.bar_code.errors %}
+                                    <p class="text-danger">{{ error }}</p>
+                                {% endfor %} 
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="{{ product_form.name.id_for_label }}" class="form-label">Product Name</label>
+                        <div>
+                            {{ product_form.name }} 
+                            {% if product_form.name.errors %} 
+                                {% for error in product_form.name.errors %}
+                                    <p class="text-danger">{{ error }}</p>
+                                {% endfor %} 
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label for="{{ product_form.qty.id_for_label }}" class="form-label">Product Quantity</label>
+                        <div>
+                            {{ product_form.qty }} 
+                            {% if product_form.qty.errors %} 
+                                {% for error in product_form.qty.errors %}
+                                    <p class="text-danger">{{ error }}</p>
+                                {% endfor %} 
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label for="{{ product_form.unit.id_for_label }}" class="form-label">Unit</label>
+                        <div>
+                            {{ product_form.unit }} 
+                            {% if product_form.unit.errors %} 
+                                {% for error in product_form.unit.errors %}
+                                    <p class="text-danger">{{ error }}</p>
+                                {% endfor %} 
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label for="{{ product_form.buy_price.id_for_label }}" class="form-label">Product Buy Price</label>
+                        <div>
+                            {{ product_form.buy_price }} 
+                            {% if product_form.buy_price.errors %} 
+                                {% for error in product_form.buy_price.errors %}
+                                    <p class="text-danger">{{ error }}</p>
+                                {% endfor %} 
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label for="{{ product_form.sell_price.id_for_label }}" class="form-label">Product Sell Price</label>
+                        <div>
+                            {{ product_form.sell_price }} 
+                            {% if product_form.sell_price.errors %} 
+                                {% for error in product_form.sell_price.errors %}
+                                    <p class="text-danger">{{ error }}</p>
+                                {% endfor %} 
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label for="{{ product_form.category.id_for_label }}" class="form-label">Product Category</label>
+                        <div>
+                            {{ product_form.category }} 
+                            {% if product_form.category.errors %} 
+                                {% for error in product_form.category.errors %}
+                                    <p class="text-danger">{{ error }}</p>
+                                {% endfor %} 
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label for="{{ product_form.supplier.id_for_label }}" class="form-label">Product Supplier</label>
+                        <div>
+                            {{ product_form.supplier }} 
+                            {% if product_form.supplier.errors %} 
+                                {% for error in product_form.supplier.errors %}
+                                    <p class="text-danger">{{ error }}</p>
+                                {% endfor %} 
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label for="{{ product_form.image.id_for_label }}" class="form-label">Product Photo</label>
+                        <div class="input-group">
+                            <input type="file" class="form-control" id="{{ product_form.image.id_for_label }}" name="{{ product_form.image.name }}">
+                            {% if product_form.image.value %}
+                                <img src="{{ product_form.image.value.url }}" alt="Current Image" class="img-fluid rounded mt-2" style="max-height: 150px">
+                            {% endif %}
+                        </div>
+                        {% if product_form.image.errors %} 
+                            {% for error in product_form.image.errors %}
+                                <p class="text-danger">{{ error }}</p>
+                            {% endfor %} 
+                        {% endif %}
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label for="{{ product_form.qr_image.id_for_label }}" class="form-label">QR Code Image</label>
+                        <div class="input-group">
+                            <input type="file" class="form-control" id="{{ product_form.qr_image.id_for_label }}" name="{{ product_form.qr_image.name }}">
+                            {% if product_form.qr_image.value %}
+                                <img src="{{ product_form.qr_image.value.url }}" alt="Current Image" class="img-fluid rounded mt-2" style="max-height: 150px">
+                            {% endif %}
+                        </div>
+                        {% if product_form.qr_image.errors %} 
+                            {% for error in product_form.qr_image.errors %}
+                                <p class="text-danger">{{ error }}</p>
+                            {% endfor %} 
+                        {% endif %}
+                    </div>
+                    
+                    <div class="col-md-12 my-3">
+                        <div class="col-4 mx-auto d-block">
+                            <button class="btn btn-primary" type="submit" name="product_submit">Submit</button>
+                            <button class="btn btn-primary" type="reset">Reset</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    document.getElementById('search-form').addEventListener('submit', function(event) {
+        event.preventDefault();
+        var searchValue = document.getElementById('search-product').value;
+        if (searchValue) {
+            var form = document.createElement('form');
+            form.method = 'POST';
+            form.style.display = 'none';
+            form.innerHTML = `
+                {% csrf_token %}
+                <input type="hidden" name="search_product" value="${searchValue}">
+            `;
+            document.body.appendChild(form);
+            form.submit();
+        }
+    });
+</script>
+{% endblock %}
