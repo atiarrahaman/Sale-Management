@@ -24,6 +24,17 @@ class Category(models.Model):
 
     def __str__(self):
         return self.name
+    
+class Brand(models.Model):
+    name = models.CharField(max_length=150)
+    slug = models.SlugField(max_length=50, unique=True)
+
+    def save(self, *args, **kwargs):
+        self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.name
 #Inventory models
 class Inventory(models.Model):
     user=models.ForeignKey(User, on_delete=models.CASCADE)

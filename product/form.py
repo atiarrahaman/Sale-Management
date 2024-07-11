@@ -1,14 +1,13 @@
 from django import forms
 from .models import Product, CartProduct, Order, ReturnProduct
-from inventory .models import Category, Supplier
+from inventory .models import Category, Supplier,Brand
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Field
 # Product Form
 class ProductForm(forms.ModelForm):
     name = forms.CharField(widget=forms.TextInput(
         attrs={'class': 'form-control'}))
-    bar_code = forms.CharField(widget=forms.TextInput(
-        attrs={'class': 'form-control'}))
+    
     qty = forms.CharField(widget=forms.TextInput(
         attrs={'class': 'form-control'}))
     buy_price = forms.CharField(widget=forms.TextInput(
@@ -16,6 +15,8 @@ class ProductForm(forms.ModelForm):
     sell_price = forms.CharField(widget=forms.TextInput(
         attrs={'class': 'form-control'}))
     category = forms.ModelChoiceField(queryset=Category.objects.all(
+    ), widget=forms.Select(attrs={'class': 'form-control'}))
+    brand = forms.ModelChoiceField(queryset=Brand.objects.all(
     ), widget=forms.Select(attrs={'class': 'form-control'}))
     supplier = forms.ModelChoiceField(queryset=Supplier.objects.all(
     ), widget=forms.Select(attrs={'class': 'form-control'}))
@@ -32,7 +33,7 @@ class ProductForm(forms.ModelForm):
     class Meta:
         model = Product
         fields = ['id','name', 'qty', 'unit', 'buy_price', 'sell_price',
-                  'category', 'supplier', 'image', 'bar_code']
+                  'category', 'brand', 'supplier', 'image',]
 
 
 class CartProductForm(forms.ModelForm):
