@@ -4,20 +4,11 @@
 {% block content %}
 <div id="addProduct">
     <div class="container">
-        <h1 class="text-center mt-4">Add New Product</h1>
-        
-        <!-- Display messages -->
-        <!-- {% if messages %}
-            <div class="alert alert-info" role="alert">
-                {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-                {% endfor %}
-            </div>
-        {% endif %} -->
-        
-        <!-- Search Form -->
+        <h3 class="text-center mt-2">Add New Product</h3>
+        <hr>
+
         <div class="d-flex justify-content-center align-items-center">
-            <div class="col-md-8 shadow-lg mt-5 p-4 rounded-5">
+            <div class="col-md-8 shadow-lg p-4 rounded-5">
                 <form method="POST" id="search-form">
                     {% csrf_token %}
                     <div class="input-group mb-3">
@@ -30,7 +21,7 @@
 
         <!-- Product Form -->
         <div class="d-flex justify-content-center align-items-center">
-            <div class="col-md-8 shadow-lg mt-5 p-4 rounded-5">
+            <div class="col-md-8 shadow-lg mt-2 p-4 rounded-5">
                 <div class="d-flex justify-content-center align-items-center">
                     {% if product_form.non_field_errors %} 
                         {% for error in product_form.non_field_errors %}
@@ -38,7 +29,7 @@
                         {% endfor %} 
                     {% endif %}
                 </div>
-                <form class="row g-3" method="POST" enctype="multipart/form-data">
+                <form class="row g-3" method="POST" enctype="multipart/form-data" id="product-form">
                     {% csrf_token %}
                     {% if product_id %}
                         <input type="hidden" name="product_id" value="{{ product_id }}">
@@ -168,6 +159,7 @@
         </div>
     </div>
 </div>
+
 <script>
     document.getElementById('search-form').addEventListener('submit', function(event) {
         event.preventDefault();
@@ -184,5 +176,21 @@
             form.submit();
         }
     });
+
+    // Trigger download if product has been added successfully
+    {% if messages %}
+        {% for message in messages %}
+            {% if message.tags == "success" and product_id %}
+                window.onload = function() {
+                    var link = document.createElement('a');
+                    link.href = "{% url 'download_barcode_image' product_id %}";
+                    link.download = "barcode_{{ product_id }}.png";
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                };
+            {% endif %}
+        {% endfor %}
+    {% endif %}
 </script>
 {% endblock %}

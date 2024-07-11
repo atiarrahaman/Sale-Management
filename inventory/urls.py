@@ -18,5 +18,7 @@ urlpatterns = [
          name='return_to_supplier'),
     path('return-supplier-products/', views.ReturnToSupplierProductListView.as_view(),
          name='return-supplier-products'),
+    path('download-barcode-image/<int:product_id>/',
+         views.download_barcode_image, name='download_barcode_image'),
 
 ]

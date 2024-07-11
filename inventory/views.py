@@ -118,6 +118,18 @@ class DeleteCategoryOrBrandView(View):
         
         return redirect('brand_category')
 
+
+def download_barcode_image(request, product_id):
+    product = get_object_or_404(Product, id=product_id)
+    if product.barcode_image:
+        response = HttpResponse(product.barcode_image, content_type='image/png')
+        response['Content-Disposition'] = f'attachment; filename=barcode_{product_id}.png'
+        return response
+    else:
+        messages.error(request, 'Barcode image not found')
+        return redirect('add_product')
+    
+
 class NewProductView(TemplateView):
     template_name = 'new_product.html'
 
@@ -164,7 +176,7 @@ class NewProductView(TemplateView):
                 # Save product
                 product = product_form.save(commit=False)
                 product.subtotal = product.qty * product.buy_price
-                barcode_value = str(product.serial_key)
+                barcode_value = str(product.serial_key).zfill(11)
                 barcode_image_data = self.generate_barcode_image(barcode_value)
 
                 # Save the barcode value and image to the product
@@ -172,19 +184,13 @@ class NewProductView(TemplateView):
                 product.barcode_image.save(
                     f'{barcode_value}.png', barcode_image_data)
 
-                
                 supplier_id = request.POST.get('supplier')
                 if supplier_id:
                     try:
                         supplier = Supplier.objects.get(id=supplier_id)
-                        print("hi")
-                        print(supplier)
-
                         supplier.total_amount += product.subtotal
                         supplier.unpaid_amount += product.subtotal
-
                         supplier.save()
-                        
                     except Supplier.DoesNotExist:
                         messages.error(request, 'Supplier not found')
                         return redirect('add_product')
@@ -211,6 +217,9 @@ class NewProductView(TemplateView):
 
                 messages.success(
                     request, f'{product.name} has been added to inventory')
+
+                # Return response with product ID for downloading the barcode image
+                return redirect('download_barcode_image', product_id=product.id)
             else:
                 for field, errors in product_form.errors.items():
                     for error in errors:
@@ -240,7 +249,6 @@ class NewProductView(TemplateView):
         context['products'] = Product.objects.all()
         context['product_id'] = kwargs.get('product_id', None)
         return context
-
 
 class AllProductView(View):
     template_name = 'all_product.html'
