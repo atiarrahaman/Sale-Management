@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 import uuid
 from django.contrib.auth.models import User
+from decimal import Decimal
 # Create your models here.
 
 UNIT =(
@@ -40,7 +41,9 @@ class Product(models.Model):
 class Cart(models.Model):
     user = models.ForeignKey(
         User, on_delete=models.SET_NULL, null=True, blank=True)
-    total = models.PositiveIntegerField(default=0)
+    total = models.DecimalField(default=0, max_digits=10, decimal_places=2)
+    discount = models.IntegerField(default=0)
+    vat = models.IntegerField(default=15)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -48,9 +51,28 @@ class Cart(models.Model):
 
     def update_cart_total(self):
         cart_products = self.cartproduct_set.all()
-        total_amount = sum(cp.subtotal for cp in cart_products)
-        self.total = total_amount
+        if cart_products.exists():
+            subtotal_amount = sum(cp.subtotal for cp in cart_products)
+
+            # Apply discount
+            discount_amount = (Decimal(self.discount) /
+                               Decimal(100)) * subtotal_amount
+            subtotal_after_discount = subtotal_amount - discount_amount
+
+            # Apply VAT
+            vat_amount = (Decimal(self.vat) / Decimal(100)) * \
+                subtotal_after_discount
+
+            # Ensure total is not negative
+            self.total = max(subtotal_after_discount +
+                             vat_amount, Decimal('0.00'))
+        else:
+            self.total = Decimal('0.00')
+            discount_amount = Decimal('0.00')
+            vat_amount = Decimal('0.00')
+
         self.save()
+        return discount_amount, vat_amount
 
 
 class CartProduct(models.Model):
@@ -67,7 +89,9 @@ class CartProduct(models.Model):
 class Order(models.Model):
     name = models.CharField(max_length=50,null=True, blank=True)
     phone = models.CharField(max_length=50, null=True, blank=True)
-    total = models.PositiveIntegerField(default=0)
+    total = models.DecimalField(default=0, max_digits=10, decimal_places=2)
+    discount = models.IntegerField(default=0.0)
+    vat = models.IntegerField(default=15)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
