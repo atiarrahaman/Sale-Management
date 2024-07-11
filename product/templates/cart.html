@@ -51,13 +51,23 @@
             </form>
         </div>
         <div class="col-md-8">
-            <h3>Cart Products</h3>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3>Cart Products</h3>
+                <form id="cart-settings-form" method="post" action="{% url 'update-cart-settings' %}" class="d-flex align-items-center">
+                    {% csrf_token %}
+                    <label for="cart_discount" class="me-2">Discount (%):</label>
+                    <input type="number" name="cart_discount" id="cart_discount" class="form-control me-2" value="{{ cart_discount }}" style="width: 80px;">
+                    <label for="cart_vat" class="me-2">VAT (%):</label>
+                    <input type="number" name="cart_vat" id="cart_vat" class="form-control me-2" value="{{ cart_vat }}" style="width: 80px;">
+                    <button type="submit" class="btn btn-primary">Update</button>
+                </form>
+            </div>
             <div class="table-responsive">
                 <table class="table table-bordered border-primary">
                     <thead>
                         <tr>
                             <th>SL</th>
-                            <th>Product Name</th>
+                            <th>Product</th>
                             <th>Price</th>
                             <th>Quantity</th>
                             <th>Unit</th>
@@ -71,21 +81,21 @@
                             <td>{{ forloop.counter }}</td>
                             <td>{{ cart_product.product.name }}</td>
                             <td style="width: 150px;">
-    <div style="width: 100%;">
-        <form action="{% url 'manage-cart' cart_product.id %}" method="post" class="update-price-form" style="width: 100%;">
-            {% csrf_token %}
-            <input type="number" name="price" step="any" value="{{ cart_product.price }}" class="update-price-input form-control" style="width: 100%;">
-        </form>
-    </div>
-</td>
-<td style="width: 150px;">
-    <div style="width: 100%;">
-        <form action="{% url 'manage-cart' cart_product.id %}" method="post" class="update-quantity-form" style="width: 100%;">
-            {% csrf_token %}
-            <input type="number" name="quantity" value="{{ cart_product.quantity }}" min="1" class="update-quantity-input form-control" style="width: 100%;">
-        </form>
-    </div>
-</td>
+                                <div style="width: 100%;">
+                                    <form action="{% url 'manage-cart' cart_product.id %}" method="post" class="update-price-form" style="width: 100%;">
+                                        {% csrf_token %}
+                                        <input type="number" name="price" step="any" value="{{ cart_product.price }}" class="update-price-input form-control" style="width: 100%;">
+                                    </form>
+                                </div>
+                            </td>
+                            <td style="width: 150px;">
+                                <div style="width: 100%;">
+                                    <form action="{% url 'manage-cart' cart_product.id %}" method="post" class="update-quantity-form" style="width: 100%;">
+                                        {% csrf_token %}
+                                        <input type="number" name="quantity" value="{{ cart_product.quantity }}" min="1" class="update-quantity-input form-control" style="width: 100%;">
+                                    </form>
+                                </div>
+                            </td>
                             <td>{{ cart_product.product.unit }}</td>
                             <td>{{ cart_product.subtotal }}</td>
                             <td>
@@ -93,9 +103,17 @@
                             </td>
                         </tr>
                         {% endfor %}
+                        
+                        {% if cart_discount %}
+                            <tr>
+                            <th colspan="5" class="text-end">Discount {{ cart_discount }}  Amount:</th>
+                            <th class="text-center">{{ discount_amount|floatformat:2|intcomma }} TK</th>
+                            <th></th>
+                        </tr>
+                        {% endif %}
                         <tr>
-                            <th colspan="4" class="text-end">Total Amount:</th>
-                            <th class="text-center">{{ cart_total|floatformat:2|intcomma }}</th>
+                            <th colspan="5" class="text-end">Include {{ cart_vat }}% Vat {{ vat_amount|floatformat:2|intcomma }}TK. Total Amount:</th>
+                            <th class="text-center">{{ cart_total|floatformat:2|intcomma }} TK</th>
                             <th></th>
                         </tr>
                     </tbody>

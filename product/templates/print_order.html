@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+    {% load humanize %}
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -49,9 +50,16 @@
                     <td>{{ order_product.subtotal }}</td>
                 </tr>
                 {% endfor %}
+                {% if order_discount %}
+                  <tr>
+                    <td colspan="4" style="text-align: right;">Discount {{ order_discount }}% Amount:</td>
+                    <td>{{ discount_amount|floatformat:2|intcomma }} TK</td>
+                </tr>
+                {% endif %}
+                
                 <tr>
-                    <td colspan="4" style="text-align: right;">Total Amount:</td>
-                    <td>{{ order_total }}</td>
+                    <td colspan="4" style="text-align: right;">Include {{ order_vat }}% VAT {{ vat_amount|floatformat:2|intcomma }} TK. Total Amount:</td>
+                    <td>{{ order_total|floatformat:2|intcomma }} TK</td>
                 </tr>
             </tbody>
         </table>
