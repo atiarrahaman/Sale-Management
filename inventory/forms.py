@@ -1,9 +1,16 @@
 from django import forms 
 
-from .models import Inventory, Category, Supplier, ReturnToSupplier
+from .models import Inventory, Category, Supplier, ReturnToSupplier,Brand
 
 from product.models import Product
 
+
+class BrandForm(forms.ModelForm):
+    name = forms.CharField(widget=forms.TextInput(
+        attrs={'class': 'form-control'}))
+    class Meta:
+        model = Brand
+        fields = ['name',]
 
 class CategoryForm(forms.ModelForm):
     name = forms.CharField(widget=forms.TextInput(

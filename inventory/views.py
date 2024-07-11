@@ -1,8 +1,8 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
-from .models import Inventory, Category, Supplier, ReturnToSupplier
+from .models import Inventory, Category, Supplier, ReturnToSupplier,Brand
 from django.views.generic import CreateView, TemplateView
-from . forms import CategoryForm, SupplierForm
+from . forms import CategoryForm, SupplierForm, BrandForm
 from product.models import Product
 from django.db import transaction
 from product .form import ProductForm
@@ -17,6 +17,10 @@ from django.urls import reverse
 from django.db.models import Sum, F, FloatField
 from django.db.models.functions import TruncMonth
 from datetime import date
+import barcode
+from barcode.writer import ImageWriter
+from io import BytesIO
+from django.core.files.base import ContentFile
 # Create your views here.
 
 
@@ -55,27 +59,77 @@ class SupplierDeleteView(View):
         supplier.delete()
         messages.success(request, f'{supplier.name} has been deleted.')
         return redirect('add_supplier')
-    
-class CategoryView(TemplateView):
-    template_name = 'add_category.html'
+
+
+class BrandCategoryView(TemplateView):
+    template_name = 'category_brand.html'
 
     def post(self, request, *args, **kwargs):
-        category_form = CategoryForm(request.POST)
-        if category_form.is_valid():
-            category = category_form.save()
-            messages.success(request, f'{category.name} has been added as a category')
-        else:
-            messages.error(request, 'Failed to add category. Please try again.')
-        return redirect('add_category')
+        category_form = CategoryForm(request.POST, prefix='category')
+        brand_form = BrandForm(request.POST, prefix='brand')
+
+        if 'category_submit' in request.POST:
+            if category_form.is_valid():
+                category = category_form.save()
+                messages.success(
+                    request, f'{category.name} has been added as a category')
+                return redirect('brand_category')
+            else:
+                messages.error(
+                    request, 'Failed to add category. Please correct the errors.')
+
+        if 'brand_submit' in request.POST:
+            if brand_form.is_valid():
+                brand = brand_form.save()
+                messages.success(
+                    request, f'{brand.name} has been added as a brand')
+                return redirect('brand_category')
+            else:
+                messages.error(
+                    request, 'Failed to add brand. Please correct the errors.')
+
+        context = self.get_context_data(
+            category_form=category_form, brand_form=brand_form)
+        return self.render_to_response(context)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['category_form'] = CategoryForm()
+        context.setdefault('category_form', CategoryForm(prefix='category'))
+        context.setdefault('brand_form', BrandForm(prefix='brand'))
+        context['categories'] = Category.objects.all().order_by('-id')
+        context['brands'] = Brand.objects.all().order_by('-id')
         return context
 
 
+class DeleteCategoryOrBrandView(View):
+    def post(self, request, pk, model_type, *args, **kwargs):
+        if model_type == 'category':
+            instance = get_object_or_404(Category, pk=pk)
+            instance_name = instance.name
+            instance.delete()
+            messages.success(request, f'Category "{instance_name}" has been deleted.')
+        elif model_type == 'brand':
+            instance = get_object_or_404(Brand, pk=pk)
+            instance_name = instance.name
+            instance.delete()
+            messages.success(request, f'Brand "{instance_name}" has been deleted.')
+        else:
+            messages.error(request, 'Invalid operation.')
+        
+        return redirect('brand_category')
+
 class NewProductView(TemplateView):
     template_name = 'new_product.html'
+
+    def generate_barcode_image(self, barcode_value):
+        # Generate barcode image using python-barcode
+        code128 = barcode.get_barcode_class('code128')
+        barcode_image = code128(barcode_value, writer=ImageWriter())
+
+        # Save barcode image to Django ImageField
+        buffer = BytesIO()
+        barcode_image.write(buffer)
+        return ContentFile(buffer.getvalue())
 
     def post(self, request, *args, **kwargs):
         if 'search_product' in request.POST:
@@ -110,7 +164,13 @@ class NewProductView(TemplateView):
                 # Save product
                 product = product_form.save(commit=False)
                 product.subtotal = product.qty * product.buy_price
-                print("hello")
+                barcode_value = str(product.serial_key)
+                barcode_image_data = self.generate_barcode_image(barcode_value)
+
+                # Save the barcode value and image to the product
+                product.barcode = barcode_value
+                product.barcode_image.save(
+                    f'{barcode_value}.png', barcode_image_data)
 
                 
                 supplier_id = request.POST.get('supplier')
@@ -180,7 +240,6 @@ class NewProductView(TemplateView):
         context['products'] = Product.objects.all()
         context['product_id'] = kwargs.get('product_id', None)
         return context
-
 
 
 class AllProductView(View):

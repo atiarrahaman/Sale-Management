@@ -27,9 +27,13 @@ class Product(models.Model):
     subtotal = models.IntegerField(null=True,blank=True,default=0)
     category = models.ForeignKey(
         'inventory.Category', on_delete=models.CASCADE, blank=True, null=True)
+    brand = models.ForeignKey(
+        'inventory.Brand', on_delete=models.CASCADE, blank=True, null=True)
     serial_key = models.UUIDField(
         default=uuid.uuid4, editable=False, unique=True)
-    bar_code = models.CharField(max_length=50, null=True, blank=True, unique=True)
+    barcode = models.CharField(max_length=50, null=True, blank=True, unique=True)
+    barcode_image = models.ImageField(
+        upload_to='product_barcodes', blank=True, null=True)
 
     image = models.ImageField(upload_to='product_image', blank=True, null=True)
     timestamps = models.DateTimeField(auto_now_add=True, null=True)
