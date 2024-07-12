@@ -4,29 +4,53 @@
 {% block content %}
 <div id="addProduct">
     <div class="container">
-        <h3 class="text-center mt-2">Add New Product</h3>
-        <hr>
-
+        <h3 class="text-center">Increase Quantity</h3>
+        <!-- Add Quantity Form -->
+          <div class="d-flex justify-content-center align-items-center">
+        <div class="col-md-8 shadow-lg pt-2 rounded-5">
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="add_quantity" value="1">
+                <div class="row mb-3">
+                    <div class="col">
+                        {{ quantity_form.product }}
+                    </div>
+                    <div class="col">
+                        {{ quantity_form.quantity }}
+                    </div>
+                    <div class="col-auto">
+                        <button type="submit" class="btn btn-primary">Add Quantity</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <hr>
+        <h3 class="text-center">New Items</h3>
+        <!-- Search Product Form -->
         <div class="d-flex justify-content-center align-items-center">
-            <div class="col-md-8 shadow-lg p-4 rounded-5">
+            <div class="col-md-8 shadow-lg p-2 rounded-5">
                 <form method="POST" id="search-form">
                     {% csrf_token %}
-                    <div class="input-group mb-3">
-                        <input type="text" class="form-control" id="search-product" name="search_product" placeholder="Search Product by ID or Name">
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="search-product" name="search_product"
+                            placeholder="Search Product by ID or Name">
                         <button class="btn btn-outline-secondary" type="submit" id="search-btn">Search</button>
                     </div>
                 </form>
             </div>
         </div>
 
+        
+
         <!-- Product Form -->
         <div class="d-flex justify-content-center align-items-center">
             <div class="col-md-8 shadow-lg mt-2 p-4 rounded-5">
                 <div class="d-flex justify-content-center align-items-center">
-                    {% if product_form.non_field_errors %} 
+                    {% if product_form.non_field_errors %}
                         {% for error in product_form.non_field_errors %}
                             <div class="alert alert-danger" role="alert">{{ error }}</div>
-                        {% endfor %} 
+                        {% endfor %}
                     {% endif %}
                 </div>
                 <form class="row g-3" method="POST" enctype="multipart/form-data" id="product-form">
@@ -34,8 +58,8 @@
                     {% if product_id %}
                         <input type="hidden" name="product_id" value="{{ product_id }}">
                     {% endif %}
-                    
-                    
+
+                    <!-- Product Name -->
                     <div class="col-md-4">
                         <label for="{{ product_form.name.id_for_label }}" class="form-label">Product Name</label>
                         <div>
@@ -47,7 +71,8 @@
                             {% endif %}
                         </div>
                     </div>
-                    
+
+                    <!-- Product Quantity -->
                     <div class="col-md-4">
                         <label for="{{ product_form.qty.id_for_label }}" class="form-label">Product Quantity</label>
                         <div>
@@ -59,7 +84,8 @@
                             {% endif %}
                         </div>
                     </div>
-                    
+
+                    <!-- Product Unit -->
                     <div class="col-md-4">
                         <label for="{{ product_form.unit.id_for_label }}" class="form-label">Unit</label>
                         <div>
@@ -71,7 +97,8 @@
                             {% endif %}
                         </div>
                     </div>
-                    
+
+                    <!-- Product Buy Price -->
                     <div class="col-md-4">
                         <label for="{{ product_form.buy_price.id_for_label }}" class="form-label">Product Buy Price</label>
                         <div>
@@ -83,7 +110,8 @@
                             {% endif %}
                         </div>
                     </div>
-                    
+
+                    <!-- Product Sell Price -->
                     <div class="col-md-4">
                         <label for="{{ product_form.sell_price.id_for_label }}" class="form-label">Product Sell Price</label>
                         <div>
@@ -95,7 +123,8 @@
                             {% endif %}
                         </div>
                     </div>
-                    
+
+                    <!-- Product Brand -->
                     <div class="col-md-4">
                         <label for="{{ product_form.brand.id_for_label }}" class="form-label">Product Brand</label>
                         <div>
@@ -107,6 +136,8 @@
                             {% endif %}
                         </div>
                     </div>
+
+                    <!-- Product Category -->
                     <div class="col-md-4">
                         <label for="{{ product_form.category.id_for_label }}" class="form-label">Product Category</label>
                         <div>
@@ -118,7 +149,8 @@
                             {% endif %}
                         </div>
                     </div>
-                    
+
+                    <!-- Product Supplier -->
                     <div class="col-md-4">
                         <label for="{{ product_form.supplier.id_for_label }}" class="form-label">Product Supplier</label>
                         <div>
@@ -130,7 +162,8 @@
                             {% endif %}
                         </div>
                     </div>
-                    
+
+                    <!-- Product Photo -->
                     <div class="col-md-4">
                         <label for="{{ product_form.image.id_for_label }}" class="form-label">Product Photo</label>
                         <div class="input-group">
@@ -145,9 +178,8 @@
                             {% endfor %} 
                         {% endif %}
                     </div>
-                    
-                    
-                    
+
+                    <!-- Submit and Reset Buttons -->
                     <div class="col-md-12 my-3">
                         <div class="col-4 mx-auto d-block">
                             <button class="btn btn-primary" type="submit" name="product_submit">Submit</button>
@@ -161,7 +193,8 @@
 </div>
 
 <script>
-    document.getElementById('search-form').addEventListener('submit', function(event) {
+    // JavaScript to handle form submissions asynchronously
+    document.getElementById('search-form').addEventListener('submit', function (event) {
         event.preventDefault();
         var searchValue = document.getElementById('search-product').value;
         if (searchValue) {
@@ -177,11 +210,29 @@
         }
     });
 
+    document.getElementById('add-quantity-form').addEventListener('submit', function (event) {
+        event.preventDefault();
+        var productId = document.getElementById('add-quantity-product').value;
+        var quantity = document.getElementById('add-quantity-amount').value;
+        if (productId && quantity) {
+            var form = document.createElement('form');
+            form.method = 'POST';
+            form.style.display = 'none';
+            form.innerHTML = `
+                {% csrf_token %}
+                <input type="hidden" name="product_id" value="${productId}">
+                <input type="hidden" name="quantity" value="${quantity}">
+            `;
+            document.body.appendChild(form);
+            form.submit();
+        }
+    });
+
     // Trigger download if product has been added successfully
     {% if messages %}
         {% for message in messages %}
             {% if message.tags == "success" and product_id %}
-                window.onload = function() {
+                window.onload = function () {
                     var link = document.createElement('a');
                     link.href = "{% url 'download_barcode_image' product_id %}";
                     link.download = "barcode_{{ product_id }}.png";
