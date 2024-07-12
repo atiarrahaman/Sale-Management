@@ -288,6 +288,7 @@ class NewProductView(TemplateView):
         context['products'] = Product.objects.all()
         context['product_id'] = kwargs.get('product_id', None)
         return context
+
 class AllProductView(View):
     template_name = 'all_product.html'
 

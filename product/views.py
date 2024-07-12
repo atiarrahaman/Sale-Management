@@ -504,6 +504,7 @@ class AllOrderView(TemplateView):
     def post(self, request, *args, **kwargs):
         start_date_str = request.POST.get('start_date')
         end_date_str = request.POST.get('end_date')
+        invoice = request.POST.get('invoice')
         name = request.POST.get('name')
         phone = request.POST.get('phone')
         product_name = request.POST.get('product_name')
@@ -515,6 +516,8 @@ class AllOrderView(TemplateView):
             filters &= Q(created_at__date__gte=start_date,
                          created_at__date__lte=end_date)
 
+        if invoice:
+            filters &= Q(invoice__icontains=invoice)
         if name:
             filters &= Q(name__icontains=name)
 

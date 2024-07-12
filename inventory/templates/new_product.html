@@ -29,13 +29,13 @@
         <h3 class="text-center">New Items</h3>
         <!-- Search Product Form -->
         <div class="d-flex justify-content-center align-items-center">
-            <div class="col-md-8 shadow-lg p-2 rounded-5">
+            <div class="col-md-8 shadow-lg p-2 rounded-5 ">
                 <form method="POST" id="search-form">
                     {% csrf_token %}
                     <div class="input-group">
                         <input type="text" class="form-control" id="search-product" name="search_product"
                             placeholder="Search Product by ID or Name">
-                        <button class="btn btn-outline-secondary" type="submit" id="search-btn">Search</button>
+                        <button class="btn btn-outline-secondary ml-3" type="submit" id="search-btn">Search</button>
                     </div>
                 </form>
             </div>
@@ -45,7 +45,7 @@
 
         <!-- Product Form -->
         <div class="d-flex justify-content-center align-items-center">
-            <div class="col-md-8 shadow-lg mt-2 p-4 rounded-5">
+            <div class="col-md-8 shadow-lg p-4 rounded-5">
                 <div class="d-flex justify-content-center align-items-center">
                     {% if product_form.non_field_errors %}
                         {% for error in product_form.non_field_errors %}
