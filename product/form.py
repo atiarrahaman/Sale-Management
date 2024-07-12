@@ -14,12 +14,16 @@ class ProductForm(forms.ModelForm):
         attrs={'class': 'form-control'}))
     sell_price = forms.CharField(widget=forms.TextInput(
         attrs={'class': 'form-control'}))
-    category = forms.ModelChoiceField(queryset=Category.objects.all(
-    ), widget=forms.Select(attrs={'class': 'form-control'}))
-    brand = forms.ModelChoiceField(queryset=Brand.objects.all(
-    ), widget=forms.Select(attrs={'class': 'form-control'}))
-    supplier = forms.ModelChoiceField(queryset=Supplier.objects.all(
-    ), widget=forms.Select(attrs={'class': 'form-control'}))
+    category = forms.ModelChoiceField(queryset=Category.objects.all(),
+                                      empty_label='Select Category',
+                                      widget=forms.Select(attrs={'class': 'form-control'}))
+    brand = forms.ModelChoiceField(queryset=Brand.objects.all(),
+                                   empty_label='Select Brand',
+                                   widget=forms.Select(attrs={'class': 'form-control'}))
+
+    supplier = forms.ModelChoiceField(queryset=Supplier.objects.all(),
+                                      empty_label='Select Supplier',
+                                      widget=forms.Select(attrs={'class': 'form-control'}))
     image= forms.FileInput(attrs={'class': 'form-control'}),
     UNIT_CHOICES = (
         ("PCS","PCS"),

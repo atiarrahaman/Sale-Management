@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from .models import Inventory, Category, Supplier, ReturnToSupplier,Brand
 from django.views.generic import CreateView, TemplateView
-from . forms import CategoryForm, SupplierForm, BrandForm
+from . forms import CategoryForm, SupplierForm, BrandForm, QuantityForm
 from product.models import Product
 from django.db import transaction
 from product .form import ProductForm
@@ -21,6 +21,7 @@ import barcode
 from barcode.writer import ImageWriter
 from io import BytesIO
 from django.core.files.base import ContentFile
+from django.db.models import Q
 # Create your views here.
 
 
@@ -134,23 +135,21 @@ class NewProductView(TemplateView):
     template_name = 'new_product.html'
 
     def generate_barcode_image(self, barcode_value):
-        # Generate barcode image using python-barcode
         code128 = barcode.get_barcode_class('code128')
         barcode_image = code128(barcode_value, writer=ImageWriter())
-
-        # Save barcode image to Django ImageField
         buffer = BytesIO()
         barcode_image.write(buffer)
         return ContentFile(buffer.getvalue())
 
     def post(self, request, *args, **kwargs):
-        if 'search_product' in request.POST:
+        if 'search_product' in request.POST and 'add_quantity' not in request.POST:
             # Search for existing product
             search_value = request.POST.get('search_product')
             product = None
             if search_value:
                 try:
-                    product = Product.objects.get(id=search_value)
+                    product = Product.objects.get(
+                        Q(id=search_value) | Q(barcode=search_value))
                 except (Product.DoesNotExist, ValueError):
                     product = Product.objects.filter(
                         name__icontains=search_value).first()
@@ -162,6 +161,42 @@ class NewProductView(TemplateView):
             else:
                 messages.error(request, 'Product not found')
                 return redirect('add_product')
+
+        elif 'add_quantity' in request.POST:
+            # Adding quantity to existing product
+            quantity_form = QuantityForm(request.POST)
+            if quantity_form.is_valid():
+                product = quantity_form.cleaned_data['product']
+                quantity = quantity_form.cleaned_data['quantity']
+
+                product.qty += quantity
+                product.save()
+
+                inventory_id = request.session.get("inventory_id")
+                today = date.today()
+                try:
+                    inventory_obj = Inventory.objects.get(
+                        id=inventory_id, date=today)
+                except Inventory.DoesNotExist:
+                    inventory_obj = Inventory.objects.create(
+                        user=request.user, date=today, total=0)
+                    request.session['inventory_id'] = inventory_obj.id
+
+                product.inventory = inventory_obj
+                product.save()
+
+                inventory_obj.total += product.buy_price * quantity
+                inventory_obj.save()
+
+                messages.success(request, f'Quantity added to {product.name}')
+            else:
+                for field, errors in quantity_form.errors.items():
+                    for error in errors:
+                        messages.error(request, f'Error in {field}: {error}')
+                messages.error(request, 'Failed to add quantity. Please try again.')
+
+            return redirect('add_product')
+
         else:
             # Adding new product
             product_id = request.POST.get('product_id')
@@ -173,21 +208,17 @@ class NewProductView(TemplateView):
                 product_form = ProductForm(request.POST, request.FILES)
 
             if product_form.is_valid():
-                # Save product
                 product = product_form.save(commit=False)
                 product.subtotal = product.qty * product.buy_price
 
-                # Save product to generate serial key
                 with transaction.atomic():
                     product.save()
                     product.serial_key = product.generate_serial_key()
                     product.save()
 
-                # Generate barcode value and image
                 barcode_value = product.serial_key
                 barcode_image_data = self.generate_barcode_image(barcode_value)
 
-                # Save the barcode value and image to the product
                 product.barcode = barcode_value
                 product.barcode_image.save(
                     f'{barcode_value}.png', barcode_image_data)
@@ -206,7 +237,6 @@ class NewProductView(TemplateView):
                 with transaction.atomic():
                     product.save()
 
-                    # Handle inventory
                     inventory_id = request.session.get("inventory_id")
                     today = date.today()
                     try:
@@ -226,7 +256,6 @@ class NewProductView(TemplateView):
                 messages.success(
                     request, f'{product.name} has been added to inventory')
 
-                # Pass product_id to context to trigger download
                 context = self.get_context_data(product_id=product.id)
                 return self.render_to_response(context)
             else:
@@ -252,13 +281,14 @@ class NewProductView(TemplateView):
             inventory_total = 0
 
         context['product_form'] = kwargs.get('product_form', ProductForm())
+        context['quantity_form'] = QuantityForm()
         context['inventory_products'] = inventory_products
         context['inventory_total'] = inventory_total
         context['suppliers'] = Supplier.objects.all()
         context['products'] = Product.objects.all()
         context['product_id'] = kwargs.get('product_id', None)
         return context
-    
+
 class AllProductView(View):
     template_name = 'all_product.html'
 

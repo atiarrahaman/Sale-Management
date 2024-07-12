@@ -7,6 +7,7 @@ import datetime
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.db import transaction
+from core.models import ShopOwner
 # Create your models here.
 
 UNIT =(
@@ -117,9 +118,32 @@ class Order(models.Model):
     discount = models.IntegerField(default=0.0)
     vat = models.IntegerField(default=15)
     created_at = models.DateTimeField(auto_now_add=True)
+    invoice = models.CharField(
+        max_length=20, unique=True, blank=True, null=True)
+
+    def generate_invoice(self):
+
+        shop_owner = ShopOwner.objects.first()
+        shop_name_initials = ''.join([word[0].upper()
+                                     for word in shop_owner.shop_name.split()])
+
+        last_order = Order.objects.filter(
+            invoice__startswith=shop_name_initials).order_by('id').last()
+        if last_order:
+            last_invoice_number = int(last_order.invoice.split('-')[-1])
+            new_invoice_number = last_invoice_number + 1
+        else:
+            new_invoice_number = 1
+
+        return f'{shop_name_initials}-{new_invoice_number:04d}'
+
+    def save(self, *args, **kwargs):
+        if not self.invoice:
+            self.invoice = self.generate_invoice()
+        super().save(*args, **kwargs)
 
     def __str__(self):
-        return "Order: " + str(self.id)
+        return f"Order: {self.id}"
 
 
 class OrderProduct(models.Model):
