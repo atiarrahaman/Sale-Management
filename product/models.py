@@ -3,6 +3,10 @@ from django.contrib.auth.models import User
 import uuid
 from django.contrib.auth.models import User
 from decimal import Decimal
+import datetime
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.db import transaction
 # Create your models here.
 
 UNIT =(
@@ -29,8 +33,8 @@ class Product(models.Model):
         'inventory.Category', on_delete=models.CASCADE, blank=True, null=True)
     brand = models.ForeignKey(
         'inventory.Brand', on_delete=models.CASCADE, blank=True, null=True)
-    serial_key = models.UUIDField(
-        default=uuid.uuid4, editable=False, unique=True)
+    serial_key = models.CharField(
+        max_length=13, editable=False, unique=True)
     barcode = models.CharField(max_length=50, null=True, blank=True, unique=True)
     barcode_image = models.ImageField(
         upload_to='product_barcodes', blank=True, null=True)
@@ -40,6 +44,22 @@ class Product(models.Model):
 
     def __str__(self):
         return self.name
+
+    def generate_serial_key(self):
+        current_year = datetime.datetime.now().year
+        current_month = datetime.datetime.now().month
+        return f"{current_year}{current_month:02d}{self.id:05d}"
+
+    def save(self, *args, **kwargs):
+        if not self.serial_key:
+            super().save(*args, **kwargs)  # Save to generate ID first
+            self.serial_key = self.generate_serial_key()
+            super().save(*args, **kwargs)  # Save again to update serial_key
+        else:
+            super().save(*args, **kwargs)
+        print(self.serial_key)
+
+
 
 
 class Cart(models.Model):

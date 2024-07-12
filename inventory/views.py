@@ -176,7 +176,15 @@ class NewProductView(TemplateView):
                 # Save product
                 product = product_form.save(commit=False)
                 product.subtotal = product.qty * product.buy_price
-                barcode_value = str(product.serial_key).zfill(11)
+
+                # Save product to generate serial key
+                with transaction.atomic():
+                    product.save()
+                    product.serial_key = product.generate_serial_key()
+                    product.save()
+
+                # Generate barcode value and image
+                barcode_value = product.serial_key
                 barcode_image_data = self.generate_barcode_image(barcode_value)
 
                 # Save the barcode value and image to the product
@@ -218,8 +226,9 @@ class NewProductView(TemplateView):
                 messages.success(
                     request, f'{product.name} has been added to inventory')
 
-                # Return response with product ID for downloading the barcode image
-                return redirect('download_barcode_image', product_id=product.id)
+                # Pass product_id to context to trigger download
+                context = self.get_context_data(product_id=product.id)
+                return self.render_to_response(context)
             else:
                 for field, errors in product_form.errors.items():
                     for error in errors:
@@ -249,7 +258,7 @@ class NewProductView(TemplateView):
         context['products'] = Product.objects.all()
         context['product_id'] = kwargs.get('product_id', None)
         return context
-
+    
 class AllProductView(View):
     template_name = 'all_product.html'
 
