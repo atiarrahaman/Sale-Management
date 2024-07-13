@@ -178,7 +178,7 @@ class DamageProduct(models.Model):
     is_returned = models.BooleanField(default=False)
 
     def subtotal(self):
-        return self.damage_quantity * self.product.buy_price
+        return self.damage_quantity * self.damage_product.buy_price
     
     def __str__(self):
         return f"Damage {self.id}"

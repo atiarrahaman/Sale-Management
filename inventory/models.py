@@ -50,7 +50,7 @@ class ReturnToSupplier(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE)
     return_quantity = models.IntegerField()
-    return_reason = models.TextField(blank=True)
+    return_reason = models.TextField(blank=True,default="Damage")
     return_date = models.DateField(auto_now_add=True)
     is_damage = models.BooleanField(default=False)
 

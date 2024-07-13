@@ -1,7 +1,8 @@
 from django.shortcuts import render
 from django.http import HttpResponse
 from .models import Product
-from inventory.models import  Category, Supplier
+from inventory.models import  Category, Supplier,ReturnToSupplier
+from inventory.forms import ReturnToSupplierForm
 from django.views.generic import CreateView, UpdateView, DetailView, DeleteView
 from django.views import View
 from django.urls import reverse_lazy
@@ -610,15 +611,51 @@ class ReturnProductListView(TemplateView):
 class DamageProductListView(TemplateView):
     template_name = 'damage_product_list.html'
 
+    def post(self, request, *args, **kwargs):
+        return_form = ReturnToSupplierForm(request.POST)
+        if return_form.is_valid():
+            return_to_supplier = return_form.save(commit=False)
+            product = return_to_supplier.product
+            return_quantity = return_to_supplier.return_quantity
+
+            try:
+                damage_product = DamageProduct.objects.get(
+                    damage_product=product, is_returned=False)
+                if damage_product.damage_quantity >= return_quantity:
+                    return_to_supplier.is_damage = True
+                    return_to_supplier.save()
+
+                    # Update the corresponding DamageProduct
+                    damage_product.damage_quantity -= return_quantity
+                    if damage_product.damage_quantity == 0:
+                        damage_product.is_returned = True
+                    damage_product.save()
+
+                    messages.success(
+                        request, f'{product.name} has been returned. Quantity: {return_quantity}.')
+                    return redirect('damage_products')
+                else:
+                    messages.error(
+                        request, f'Return quantity cannot exceed damaged quantity. {product.name} has only {damage_product.damage_quantity} damaged units.')
+            except DamageProduct.DoesNotExist:
+                messages.error(
+                    request, f'No damage record found for the product {product.name}.')
+
+        else:
+            messages.error(
+                request, 'Failed to submit damage form. Please correct the errors.')
+
+        context = self.get_context_data()
+        context['return_form'] = return_form
+        return self.render_to_response(context)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        damage_products = DamageProduct.objects.all().order_by("-id")
-
-        for i in damage_products:
-            print(i.damage_product.name)
+        damage_products = DamageProduct.objects.filter(
+            is_returned=False, damage_quantity__gt=0).order_by("-id")
         context['damage_products'] = damage_products
+        context['return_form'] = ReturnToSupplierForm()
         return context
-
 def sales_report(request):
     # Get all orders initially
     orders = Order.objects.all()

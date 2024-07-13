@@ -3,7 +3,7 @@ from django.http import HttpResponse
 from .models import Inventory, Category, Supplier, ReturnToSupplier,Brand
 from django.views.generic import CreateView, TemplateView
 from . forms import CategoryForm, SupplierForm, BrandForm, QuantityForm
-from product.models import Product
+from product.models import Product, DamageProduct
 from django.db import transaction
 from product .form import ProductForm, DamageProductForm
 from django.core.exceptions import ObjectDoesNotExist
@@ -289,6 +289,7 @@ class NewProductView(TemplateView):
         context['product_id'] = kwargs.get('product_id', None)
         return context
 
+
 class AllProductView(View):
     template_name = 'all_product.html'
 
@@ -297,17 +298,29 @@ class AllProductView(View):
         if damage_form.is_valid():
             product = damage_form.cleaned_data['damage_product']
             quantity = damage_form.cleaned_data['damage_quantity']
+
+            # Reduce the quantity in the Product table
             product.qty -= quantity
             product.save()
-            damage_form.save()
-            messages.success(
-                request, f'{product.name} has been marked as damaged. Quantity reduced by {quantity}.')
+
+            # Check if the product already exists in DamageProduct
+            try:
+                damage_product = DamageProduct.objects.get(
+                    damage_product=product)
+                damage_product.damage_quantity += quantity
+                damage_product.is_returned = False
+                damage_product.save()
+                messages.success(
+                    request, f'{product.name} already exists in damaged products. Quantity increased by {quantity}.')
+            except DamageProduct.DoesNotExist:
+                damage_form.save()
+                messages.success(
+                    request, f'{product.name} has been marked as damaged. Quantity reduced by {quantity}.')
         else:
             messages.error(
                 request, 'Failed to submit damage form. Please correct the errors.')
 
         return redirect('all_product')
-
 
     def get(self, request, *args, **kwargs):
         all_product = Product.objects.all()
@@ -419,51 +432,51 @@ class ManageInventoryView(View):
         return redirect('add_new')
 
 
-# class ReturnToSupplierView(View):
-#     def post(self, request, *args, **kwargs):
-#         product_id = request.POST.get('product_id')
-#         supplier_name = request.POST.get('supplier_name')
-#         return_quantity = int(request.POST.get('return_quantity'))
-#         return_reason = request.POST.get('return_reason')
-#         # assuming is_damage is a checkbox
-#         is_damage = request.POST.get('is_damage') == 'on'
+class ReturnToSupplierView(View):
+    def post(self, request, *args, **kwargs):
+        product_id = request.POST.get('product_id')
+        supplier_name = request.POST.get('supplier_name')
+        return_quantity = int(request.POST.get('return_quantity'))
+        return_reason = request.POST.get('return_reason')
+        # assuming is_damage is a checkbox
+        is_damage = request.POST.get('is_damage') == 'on'
 
-#         product = Product.objects.get(id=product_id)
-#         supplier = Supplier.objects.get(name=supplier_name)
+        product = Product.objects.get(id=product_id)
+        supplier = Supplier.objects.get(name=supplier_name)
 
-#         if return_quantity > product.qty:
-#             messages.error(
-#                 request, 'Return quantity cannot be greater than available quantity.')
-#         else:
-#             # Calculate subtotal
-#             subtotal = product.buy_price * return_quantity
+        if return_quantity > product.qty:
+            messages.error(
+                request, 'Return quantity cannot be greater than available quantity.')
+        else:
+            # Calculate subtotal
+            subtotal = product.buy_price * return_quantity
 
-#             # Create a ReturnToSupplier entry
-#             return_to_supplier_product = ReturnToSupplier.objects.create(
-#                 product=product,
-#                 supplier=supplier,
-#                 return_quantity=return_quantity,
-#                 return_reason=return_reason,
-#                 is_damage=is_damage
-#             )
+            # Create a ReturnToSupplier entry
+            return_to_supplier_product = ReturnToSupplier.objects.create(
+                product=product,
+                supplier=supplier,
+                return_quantity=return_quantity,
+                return_reason=return_reason,
+                is_damage=is_damage
+            )
 
-#             # Decrease product quantity
-#             product.qty -= return_quantity
-#             product.save()
+            # Decrease product quantity
+            product.qty -= return_quantity
+            product.save()
 
-#             # Update product subtotal and save
-#             product.subtotal = product.qty*product.buy_price
-#             product.save()
+            # Update product subtotal and save
+            product.subtotal = product.qty*product.buy_price
+            product.save()
 
-#             # Recalculate total sell price after return
-#             total_sell_price = Product.objects.aggregate(
-#                 total_sell_price=Sum('sell_price'))['total_sell_price'] or 0
+            # Recalculate total sell price after return
+            total_sell_price = Product.objects.aggregate(
+                total_sell_price=Sum('sell_price'))['total_sell_price'] or 0
 
-#             messages.success(
-#                 request, 'Product returned to supplier successfully.')
+            messages.success(
+                request, 'Product returned to supplier successfully.')
 
-#         # Redirect to all products view with updated totals or error message
-#         return redirect('all_product')
+        # Redirect to all products view with updated totals or error message
+        return redirect('all_product')
 
 class ReturnToSupplierProductListView(TemplateView):
     template_name = 'return_to_supplier.html'
