@@ -3,22 +3,43 @@
 {% load crispy_forms_tags %}
 {% block content %}
 <div class="container">
+  <h4 class="text-center">Suppliers Information</h4>
+  <hr>
   <div class="row">
-    <div class="col-md-5">
-      <h1 class="text-center mt-2">Supplier Information</h1>
+    
+    <div class="col-md-4">
+      <h5 class="text-center">Add / Update</h5>
+      <hr>
       <div class="d-flex justify-content-center align-items-center">
         <div class="col-md-12 shadow-lg mt-2 p-4 rounded-5" id="supplier-form-section">
           <form method="POST">
             {% csrf_token %}
-            {{ supplier_form|crispy }}
+            <!-- Render fields without labels -->
+            {{ supplier_form.non_field_errors }}
+            <div class="form-group">
+              {{ supplier_form.name.errors }}
+              {{ supplier_form.name }}
+            </div>
+            <div class="form-group">
+              {{ supplier_form.phone.errors }}
+              {{ supplier_form.phone }}
+            </div>
+            <div class="form-group">
+              {{ supplier_form.tax_id.errors }}
+              {{ supplier_form.tax_id }}
+            </div>
+            <div class="form-group">
+              {{ supplier_form.address.errors }}
+              {{ supplier_form.address }}
+            </div>
             <input type="hidden" name="supplier_id" id="id_supplier_id">
             <button class="btn btn-primary" type="submit">Submit</button>
           </form>
         </div>
       </div>
     </div>
-    <div class="col-md-7">
-      <h2 class="text-center mt-4">Suppliers</h2>
+    <div class="col-md-8">
+      
       <table class="table table-bordered">
         <thead>
           <tr>

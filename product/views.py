@@ -1,20 +1,20 @@
 from django.shortcuts import render
 from django.http import HttpResponse
 from .models import Product
-from inventory.models import  Category, Supplier
+from inventory.models import  Category, Supplier,ReturnToSupplier
+from inventory.forms import ReturnToSupplierForm
 from django.views.generic import CreateView, UpdateView, DetailView, DeleteView
 from django.views import View
 from django.urls import reverse_lazy
 from django.shortcuts import render, redirect
-from .models import Cart, CartProduct, Order, OrderProduct, ReturnProduct
+from .models import Cart, CartProduct, Order, OrderProduct, ReturnProduct,DamageProduct
 from django.views.generic import View, ListView, TemplateView
 from django.contrib import messages
-from .form import CartProductForm, OrderForm
 from decimal import Decimal
 from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
-from .form import ProductForm, ReturnProductForm
+from .form import ProductForm, ReturnProductForm,DamageProductForm,CartProductForm, OrderForm
 from datetime import datetime
 from django.http import HttpResponseNotAllowed
 from django.db.models import Sum,Q, F, FloatField
@@ -611,23 +611,51 @@ class ReturnProductListView(TemplateView):
 class DamageProductListView(TemplateView):
     template_name = 'damage_product_list.html'
 
+    def post(self, request, *args, **kwargs):
+        return_form = ReturnToSupplierForm(request.POST)
+        if return_form.is_valid():
+            return_to_supplier = return_form.save(commit=False)
+            product = return_to_supplier.product
+            return_quantity = return_to_supplier.return_quantity
+
+            try:
+                damage_product = DamageProduct.objects.get(
+                    damage_product=product, is_returned=False)
+                if damage_product.damage_quantity >= return_quantity:
+                    return_to_supplier.is_damage = True
+                    return_to_supplier.save()
+
+                    # Update the corresponding DamageProduct
+                    damage_product.damage_quantity -= return_quantity
+                    if damage_product.damage_quantity == 0:
+                        damage_product.is_returned = True
+                    damage_product.save()
+
+                    messages.success(
+                        request, f'{product.name} has been returned. Quantity: {return_quantity}.')
+                    return redirect('damage_products')
+                else:
+                    messages.error(
+                        request, f'Return quantity cannot exceed damaged quantity. {product.name} has only {damage_product.damage_quantity} damaged units.')
+            except DamageProduct.DoesNotExist:
+                messages.error(
+                    request, f'No damage record found for the product {product.name}.')
+
+        else:
+            messages.error(
+                request, 'Failed to submit damage form. Please correct the errors.')
+
+        context = self.get_context_data()
+        context['return_form'] = return_form
+        return self.render_to_response(context)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        damage_products = ReturnProduct.objects.filter(is_damage=True).order_by("-id")
-
-        total_damage_quantity = damage_products.aggregate(
-            total_quantity=Sum('return_quantity'))['total_quantity'] or 0
-        total_damage_price = damage_products.aggregate(
-            total_price=Sum(F('return_quantity') *
-                            F('order_product__price'), output_field=FloatField())
-        )['total_price'] or 0
-
+        damage_products = DamageProduct.objects.filter(
+            is_returned=False, damage_quantity__gt=0).order_by("-id")
         context['damage_products'] = damage_products
-        context['total_damage_quantity'] = total_damage_quantity
-        context['total_damage_price'] = total_damage_price
+        context['return_form'] = ReturnToSupplierForm()
         return context
-
-
 def sales_report(request):
     # Get all orders initially
     orders = Order.objects.all()

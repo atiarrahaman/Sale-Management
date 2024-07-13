@@ -1,109 +1,96 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="container">
-    <h1 class="text-center my-3">Damaged Products</h1>
-    <div class="mb-3 bg-secondary py-2 d-flex justify-content-around text-white">
-        <h3>Total Damage Quantity: {{ total_damage_quantity }}</h3>
-        <h3>Total Damage Price: {{ total_damage_price }}</h3>
-    </div>
-    <table class="table table-bordered">
+<div class="mx-3">
+<h4 class="text-center">Damage Products</h4>
+<hr>
+    <div class="row d-flex justify-content-center align-items-start">
+        <div class="col-md-3 ">
+            <h5 class="text-center">Return to Supplier</h5>
+            <hr>
+            <div class="shadow-lg p-4 rounded-5">
+                <form action="" method="post" id="returnForm">
+        {% csrf_token %}
+        <div class="form-group">
+            {{ return_form.product }}
+        </div>
+        <div class="form-group">
+            {{ return_form.supplier }}
+        </div>
+        <div class="form-group">
+            {{ return_form.return_quantity }}
+        </div>
+        <div class="form-group">
+            {{ return_form.return_reason }}
+        </div>
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+            </div>
+        </div>
+        <div class="col-md-9">
+            
+            <div>
+                <table class="table table-bordered">
         <thead class="thead-dark">
             <tr>
-                <th>Date</th>
-                <th>Order</th>
-                <th>Customer</th>
+                <th>SL</th>
                 <th>Product</th>
                 <th>Quantity</th>
-                <th>Reason</th>
-                <th>Action</th>
+                <th>Buy Price</th>
+                <th>Subtotal</th>
             </tr>
         </thead>
         <tbody>
-            {% for damage_product in damage_products %}
+            {% for i in damage_products %}
             <tr>
-                <td>{{ damage_product.return_date }}</td>
-                <td>{{ damage_product.order_product.order.id }}</td>
-                <td>{{ damage_product.order_product.order.name }}</td>
-                <td>{{ damage_product.order_product.product.name }}</td>
-                <td>{{ damage_product.return_quantity }}</td>
-                <td>{{ damage_product.return_reason }}</td>
+                <td>{{ forloop.counter }}</td>
                 <td>
-                    <button type="button" class="btn btn-warning btn-sm return-to-supplier-button" data-toggle="modal" data-target="#returnToSupplierModal" data-product-id="{{ damage_product.order_product.product.id }}" data-product-name="{{ damage_product.order_product.product.name }}"data-product-quantity="{{ damage_product.return_quantity }}" data-supplier-name="{{ damage_product.order_product.product.supplier.name }}">
-                        Return to Supplier
-                    </button>
+                    <a href="#" class="product-link" 
+                       data-product-id="{{ i.damage_product.id }}" 
+                       data-supplier-id="{{ i.damage_product.supplier.id }}" 
+                       data-product-name="{{ i.damage_product.name }}" 
+                       data-quantity="{{ i.damage_quantity }}">
+                        {{ i.damage_product.name }}
+                    </a>
                 </td>
+                <td>{{ i.damage_quantity }}</td>
+                <td>{{ i.damage_product.buy_price }}</td>
+                <td>{{ i.subtotal }}</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
-</div>
-
-<!-- Return to Supplier Modal -->
-<div class="modal fade" id="returnToSupplierModal" tabindex="-1" role="dialog" aria-labelledby="returnToSupplierModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="returnToSupplierModalLabel">Return Product to Supplier</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
             </div>
-            <form method="post" action="{% url 'return_to_supplier' %}">
-                {% csrf_token %}
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label for="product_name_modal">Product Name</label>
-                        <input type="text" class="form-control" id="product_name_modal" name="product_name" readonly>
-                    </div>
-                    <div class="form-group">
-                        <label for="supplier_name_modal">Supplier Name</label>
-                        <input type="text" class="form-control" id="supplier_name_modal" name="supplier_name" readonly>
-                    </div>
-                    <div class="form-group">
-                        <label for="return_quantity">Return Quantity</label>
-                        <input type="number" class="form-control" id="return_quantity" name="return_quantity" min="1" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="return_reason">Return Reason</label>
-                        <textarea class="form-control" id="return_reason" name="return_reason" required></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label for="is_damage">Is Damaged?</label>
-                        <input type="checkbox" class="form-check-input" id="is_damage" name="is_damage">
-                    </div>
-                    <input type="hidden" id="product_id" name="product_id">
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-primary">Submit</button>
-                </div>
-            </form>
         </div>
     </div>
+    
+
+    <!-- Table of Damaged Products -->
+    
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    var returnToSupplierButtons = document.querySelectorAll('.return-to-supplier-button');
-    var returnToSupplierModal = document.getElementById('returnToSupplierModal');
-    var productNameInput = document.getElementById('product_name_modal');
-    var supplierNameInput = document.getElementById('supplier_name_modal');
-    var productQuantityInput = document.getElementById('return_quantity');
-    var productIdInput = document.getElementById('product_id');
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.product-link').forEach(function(link) {
+            link.addEventListener('click', function(event) {
+                event.preventDefault();
+                const productId = this.getAttribute('data-product-id');
+                const supplierId = this.getAttribute('data-supplier-id');
+                const quantity = this.getAttribute('data-quantity');
 
-    returnToSupplierButtons.forEach(function(button) {
-        button.addEventListener('click', function() {
-            var productId = button.getAttribute('data-product-id');
-            var productName = button.getAttribute('data-product-name');
-            var supplierName = button.getAttribute('data-supplier-name');
-            var productQuantity = button.getAttribute('data-product-quantity');
+                // Set the form fields
+                const productField = document.querySelector('#id_product');
+                const supplierField = document.querySelector('#id_supplier');
+                const quantityField = document.querySelector('#id_return_quantity');
 
-            productNameInput.value = productName;
-            supplierNameInput.value = supplierName;
-            productIdInput.value = productId;
-            productQuantityInput.value = productQuantity;
+                productField.value = productId;
+                supplierField.value = supplierId;
+                console.log(supplierId); // For debugging purposes
+                quantityField.value = quantity;
+                
+                // Make supplier read-only
+                supplierField.setAttribute('readonly', 'readonly');
+            });
         });
     });
-});
 </script>
 {% endblock %}

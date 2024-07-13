@@ -171,3 +171,14 @@ class ReturnProduct(models.Model):
     def __str__(self):
         return f"Return of {self.return_quantity} units of {self.order_product.product.name} from Order #{self.order_product.order.id}"
 
+
+class DamageProduct(models.Model):
+    damage_product=models.ForeignKey(Product,on_delete=models.CASCADE)
+    damage_quantity = models.IntegerField()
+    is_returned = models.BooleanField(default=False)
+
+    def subtotal(self):
+        return self.damage_quantity * self.damage_product.buy_price
+    
+    def __str__(self):
+        return f"Damage {self.id}"

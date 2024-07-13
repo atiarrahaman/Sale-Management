@@ -40,23 +40,54 @@ class CategoryForm(forms.ModelForm):
 class SupplierForm(forms.ModelForm):
     class Meta:
         model = Supplier
-        fields = '__all__'
+        fields = ['name', 'phone', 'tax_id', 'address']
 
-        widgets={
-            'name': forms.TextInput(
-                attrs={'class': 'form-control'}),
-            'phone': forms.TextInput(
-                attrs={'class': 'form-control'}),
-            'tax_id': forms.TextInput(
-                attrs={'class': 'form-control'}),
-            'address': forms.TextInput(
-                attrs={'class': 'form-control'}),
-        }
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['name'].widget.attrs.update({
+            'class': 'form-control',
+            'placeholder': 'Supplier Name'
+        })
+        self.fields['phone'].widget.attrs.update({
+            'class': 'form-control',
+            'placeholder': 'Phone Number'
+        })
+        self.fields['tax_id'].widget.attrs.update({
+            'class': 'form-control',
+            'placeholder': 'Tax ID'
+        })
+        self.fields['address'].widget.attrs.update({
+            'class': 'form-control',
+            'placeholder': 'Supplier Address'
+        })
 
 
-# class ReturnProductForm(forms.ModelForm):
-#     class Meta:
-#         model = ReturnToSupplier
-#         fields = ['order_product', 'return_quantity', 'return_reason',
-#                   'is_damage'
-#                   ]
+class ReturnToSupplierForm(forms.ModelForm):
+
+    class Meta:
+        model = ReturnToSupplier
+        fields = ['product','supplier', 'return_quantity', 'return_reason'
+                
+                  ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['product'].empty_label = 'Select Product'
+        self.fields['product'].widget.attrs.update({
+            'class': 'form-control',
+            'placeholder': 'Select Product'
+        })
+        self.fields['supplier'].empty_label = 'Select Supplier'
+        self.fields['supplier'].widget.attrs.update({
+            'class': 'form-control',
+            'placeholder': 'Select Supplier'
+        })
+        self.fields['return_quantity'].widget.attrs.update({
+            'class': 'form-control',
+            'placeholder': 'Return Quantity'
+        })
+        self.fields['return_reason'].widget = forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Return Reason',
+            'maxlength': '255'
+        })
