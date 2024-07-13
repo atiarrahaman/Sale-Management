@@ -6,15 +6,14 @@ from django.views.generic import CreateView, UpdateView, DetailView, DeleteView
 from django.views import View
 from django.urls import reverse_lazy
 from django.shortcuts import render, redirect
-from .models import Cart, CartProduct, Order, OrderProduct, ReturnProduct
+from .models import Cart, CartProduct, Order, OrderProduct, ReturnProduct,DamageProduct
 from django.views.generic import View, ListView, TemplateView
 from django.contrib import messages
-from .form import CartProductForm, OrderForm
 from decimal import Decimal
 from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
-from .form import ProductForm, ReturnProductForm
+from .form import ProductForm, ReturnProductForm,DamageProductForm,CartProductForm, OrderForm
 from datetime import datetime
 from django.http import HttpResponseNotAllowed
 from django.db.models import Sum,Q, F, FloatField
@@ -613,20 +612,12 @@ class DamageProductListView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        damage_products = ReturnProduct.objects.filter(is_damage=True).order_by("-id")
+        damage_products = DamageProduct.objects.all().order_by("-id")
 
-        total_damage_quantity = damage_products.aggregate(
-            total_quantity=Sum('return_quantity'))['total_quantity'] or 0
-        total_damage_price = damage_products.aggregate(
-            total_price=Sum(F('return_quantity') *
-                            F('order_product__price'), output_field=FloatField())
-        )['total_price'] or 0
-
+        for i in damage_products:
+            print(i.damage_product.name)
         context['damage_products'] = damage_products
-        context['total_damage_quantity'] = total_damage_quantity
-        context['total_damage_price'] = total_damage_price
         return context
-
 
 def sales_report(request):
     # Get all orders initially

@@ -1,5 +1,5 @@
 from django import forms
-from .models import Product, CartProduct, Order, ReturnProduct
+from .models import Product, CartProduct, Order, ReturnProduct,DamageProduct
 from inventory .models import Category, Supplier,Brand
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Field
@@ -78,3 +78,25 @@ class ReturnProductForm(forms.ModelForm):
         fields = ['order_product', 'return_quantity', 'return_reason',
 'is_damage'
         ]
+
+
+class DamageProductForm(forms.ModelForm):
+    class Meta:
+        model = DamageProduct
+        fields = ['damage_product', 'damage_quantity', 'is_returned']
+        widgets = {
+            'damage_quantity': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter Quantity'
+            }),
+            'is_returned': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            })
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['damage_product'].empty_label = 'Select Product'
+        self.fields['damage_product'].widget.attrs.update({
+            'class': 'form-control'
+        })

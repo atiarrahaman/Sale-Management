@@ -157,7 +157,7 @@ def user_login(request):
             else:
                 return HttpResponse("User role not defined.", status=403)
 
-        return HttpResponse("Invalid credentials.", status=401)
+        messages.error(request, 'Invalid Credentials.')
 
     return render(request, 'login.html')
 
