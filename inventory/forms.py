@@ -40,18 +40,26 @@ class CategoryForm(forms.ModelForm):
 class SupplierForm(forms.ModelForm):
     class Meta:
         model = Supplier
-        fields = '__all__'
+        fields = ['name', 'phone', 'tax_id', 'address']
 
-        widgets={
-            'name': forms.TextInput(
-                attrs={'class': 'form-control'}),
-            'phone': forms.TextInput(
-                attrs={'class': 'form-control'}),
-            'tax_id': forms.TextInput(
-                attrs={'class': 'form-control'}),
-            'address': forms.TextInput(
-                attrs={'class': 'form-control'}),
-        }
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['name'].widget.attrs.update({
+            'class': 'form-control',
+            'placeholder': 'Supplier Name'
+        })
+        self.fields['phone'].widget.attrs.update({
+            'class': 'form-control',
+            'placeholder': 'Phone Number'
+        })
+        self.fields['tax_id'].widget.attrs.update({
+            'class': 'form-control',
+            'placeholder': 'Tax ID'
+        })
+        self.fields['address'].widget.attrs.update({
+            'class': 'form-control',
+            'placeholder': 'Supplier Address'
+        })
 
 
 class ReturnToSupplierForm(forms.ModelForm):

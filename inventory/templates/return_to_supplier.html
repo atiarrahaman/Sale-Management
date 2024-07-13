@@ -10,9 +10,12 @@
     <table class="table table-bordered bold-table-border">
       <thead class="thead-dark">
         <tr>
+          <th>SL</th>
             <th>Date</th>
+            <th>Supplier</th>
           <th>Product</th>
           <th>Quantity</th>
+          <th>Price</th>
           <th>Reason</th>
           <th>Subtotal</th>
         </tr>
@@ -20,9 +23,12 @@
       <tbody>
         {% for return_product in return_products %}
           <tr>
+            <td>{{forloop.counter}}</td>
             <td>{{ return_product.return_date }}</td>
+            <td>{{ return_product.product.supplier.name }}</td>
             <td>{{ return_product.product.name }}</td>
             <td>{{ return_product.return_quantity }}</td>
+            <td>{{ return_product.product.buy_price }}</td>
             <td>{{ return_product.return_reason }}</td>
             <td>{{ return_product.subtotal }}</td>
             
